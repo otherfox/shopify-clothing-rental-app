@@ -1,0 +1,39 @@
+{
+  "name": "charlottes-closet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node server.js",
+    "build": "next build",
+    "start": "NODE_ENV=production node server.js",
+    "tunnel:start": "ssh -R charlottes-closet:80:localhost:3000 serveo.net",
+    "tunnel:stop": "ps -A| grep 'serveo.net' | cut -d' ' -f1 | xargs kill -9",
+    "tunnel:restart": "npm run tunnel:stop && npm run tunnel:start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@shopify/app-bridge-react": "^1.6.8",
+    "@shopify/koa-shopify-auth": "^3.1.36",
+    "@shopify/koa-shopify-graphql-proxy": "^3.1.1",
+    "@shopify/polaris": "^4.1.0",
+    "@zeit/next-css": "^1.0.1",
+    "apollo-boost": "^0.4.4",
+    "dotenv": "^8.1.0",
+    "graphql": "^14.5.4",
+    "isomorphic-fetch": "^2.2.1",
+    "js-cookie": "^2.2.1",
+    "koa": "^2.8.1",
+    "koa-session": "^5.12.3",
+    "lodash": "^4.17.15",
+    "moment": "^2.24.0",
+    "next": "^9.0.5",
+    "react": "^16.9.0",
+    "react-apollo": "^3.0.1",
+    "react-dom": "^16.9.0",
+    "store-js": "^2.0.4"
+  }
+}
