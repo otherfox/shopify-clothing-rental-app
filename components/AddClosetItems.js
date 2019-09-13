@@ -51,6 +51,5 @@ const AddClosetItems = props => {
     </Page >
   );
 }
-}
 
 export default AddClosetItems;
