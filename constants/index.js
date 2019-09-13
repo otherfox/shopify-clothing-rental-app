@@ -19,6 +19,8 @@ export const ENDLESS_CLOSET_EMPTY = {
     'Delivered',
     'Returned'
   ],
+  orders: [],
+  returns: [],
   items: []
 };
 export const ENDLESS_ITEM_DEFAULT_STATUS = 'In Closet';
