@@ -49,7 +49,7 @@ class UpdateCloset extends Component {
               onDismiss={() => this.setState({ showToast: false })}
             />
           );
-          const customer = this.props.customer;
+          const { customer, closet, orders } = this.props;
 
           return (
             <Layout>
@@ -65,8 +65,13 @@ class UpdateCloset extends Component {
                       {
                         content: 'Update Closet',
                         onAction: () => {
-                          console.log('update customer closet:', customer.metafield.id, 'new closet:', this.props.closet);
-                          const variables = { input: ENDLESS_CUSTOMER_UPDATE_CLOSET(customer, this.props.closet) };
+                          console.log('update customer closet:', customer.metafield.id, 'new closet:', closet, 'orders: ', orders);
+                          const variables = {
+                            input: ENDLESS_CUSTOMER_UPDATE_CLOSET(
+                              customer,
+                              { items: closet, orders: orders }
+                            )
+                          };
                           handleSubmit({
                             variables: variables,
                           });

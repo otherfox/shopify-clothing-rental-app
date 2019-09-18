@@ -26,7 +26,11 @@ app.prepare().then(() => {
     createShopifyAuth({
       apiKey: SHOPIFY_API_KEY,
       secret: SHOPIFY_API_SECRET_KEY,
-      scopes: ['read_products', 'write_products', 'read_customers', 'write_customers'],
+      scopes: [
+        'read_products', 'write_products', 'read_customers', 'write_customers',
+        'read_all_orders', 'read_orders', 'write_orders', 'read_draft_orders',
+        'write_draft_orders', 'write_fulfillments', 'read_fulfillments'
+      ],
       afterAuth(ctx) {
         const { shop, accessToken } = ctx.session;
         ctx.cookies.set('shopOrigin', shop, { httpOnly: false });

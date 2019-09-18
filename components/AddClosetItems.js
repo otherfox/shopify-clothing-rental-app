@@ -31,7 +31,7 @@ const AddClosetItems = props => {
                   onSelection={(resources) => {
                     const ids = _.map(resources.selection, 'id');
                     const newCloset = ENDLESS_CUSTOMER_ADD_ITEMS(customer.metafield.value, ids);
-                    const variables = { input: ENDLESS_CUSTOMER_UPDATE_CLOSET(customer, newCloset) };
+                    const variables = { input: ENDLESS_CUSTOMER_UPDATE_CLOSET(customer, { items: newCloset }) };
 
                     props.onUpdateCloset(newCloset);
                     props.hideAddItems();

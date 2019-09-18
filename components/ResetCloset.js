@@ -10,8 +10,10 @@ import {
 import { Mutation } from 'react-apollo';
 import _ from 'lodash';
 import { Component } from 'react';
+import moment from 'moment';
+import uuid from 'uuid/v1';
 
-import { ENDLESS_CUSTOMER_CREATE_CLOSET } from '../constants';
+import { ENDLESS_CUSTOMER_CREATE_CLOSET, ENDLESS_CUSTOMER_UPDATE_CLOSET, ENDLESS_DATE_FORMAT } from '../constants';
 
 // remove customer meta
 const REMOVE_CUSTOMER_CLOSET_META = gql`
@@ -65,6 +67,25 @@ class ResetCloset extends Component {
                   <PageActions
                     primaryAction={[
                       {
+                        content: 'Create Order',
+                        onAction: () => {
+                          console.log('Create Order');
+
+                          handleSubmit({
+                            variables: {
+                              input: ENDLESS_CUSTOMER_UPDATE_CLOSET(customer, {
+                                items: this.props.closet,
+                                orders: this.props.orders.concat([{ id: uuid(), date: moment().format(ENDLESS_DATE_FORMAT) }])
+                              })
+                            },
+                          });
+                        },
+                      },
+                    ]}
+                  />
+                  <PageActions
+                    primaryAction={[
+                      {
                         content: 'Recreate Closet',
                         onAction: () => {
                           console.log('recreate closet');
@@ -77,6 +98,7 @@ class ResetCloset extends Component {
                     secondaryActions={[
                       {
                         content: 'Delete Closet',
+                        disabled: !customer.metafield,
                         onAction: () => {
                           console.log('remove closet metafield:', customer.metafield.id);
                           handleSubmit({

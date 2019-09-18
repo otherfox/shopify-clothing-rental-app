@@ -3,12 +3,12 @@ import {
   Card,
   ResourceList,
   Stack,
-  TextStyle
+  TextStyle,
+  Spinner
 } from '@shopify/polaris';
 import { Query } from 'react-apollo';
-import { Redirect } from '@shopify/app-bridge/actions';
+import Router from 'next/router';
 import { AppBridgeContext } from '@shopify/app-bridge-react/context';
-import store from 'store-js';
 
 import { ENDLESS_CUSTOMERS_QUERY } from '../constants';
 
@@ -30,21 +30,20 @@ const GET_ENDLESS_CUSTOMERS = gql`
 class ClosetList extends React.Component {
   static contextType = AppBridgeContext;
 
-  redirectToCloset = () => {
-    const app = this.context;
-    const redirect = Redirect.create(app);
-    redirect.dispatch(
-      Redirect.Action.APP,
-      '/view-closet',
-    );
+  redirectToCloset = (id) => {
+    Router.push({
+      pathname: '/view-closet',
+      query: { id: id }
+    });
   };
 
   render() {
     return (
       <Query query={GET_ENDLESS_CUSTOMERS} variables={ENDLESS_CUSTOMERS_QUERY}>
         {({ data, loading, error }) => {
-          if (loading) return <div>Loading…</div>;
+          if (loading) return <div><Spinner size="small" color="teal" /> Fetching Closets…</div>;
           if (error) return <div>{error.message}</div>;
+
           return (
             <Card>
               <ResourceList
@@ -57,8 +56,7 @@ class ClosetList extends React.Component {
                       accessibilityLabel={`View details for ${customer.displayName}`}
                       onClick={() => {
                         console.log('Routing to customer: ', customer.id);
-                        store.set('customer', customer.id);
-                        this.redirectToCloset();
+                        this.redirectToCloset(customer.id);
                       }}
                     >
                       <Stack>
