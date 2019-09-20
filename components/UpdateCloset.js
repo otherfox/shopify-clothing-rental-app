@@ -1,20 +1,16 @@
 import {
-  Banner,
-  Form,
-  Layout,
-  PageActions,
-  Toast,
-  Spinner
+  Banner, Form, Layout, PageActions, Toast, Spinner
 } from '@shopify/polaris';
 import { Mutation } from 'react-apollo';
 import _ from 'lodash';
 import { Component } from 'react';
 
-import { ENDLESS_CUSTOMER_UPDATE_CLOSET } from '../constants';
+import { ENDLESS_UPDATE_CLOSET } from '../graphql/variables';
+import { updateCustomerClosetMeta } from '../graphql/mutations';
 
 class UpdateCloset extends Component {
   state = {
-    showToast: true
+    showToast: false
   }
 
   render() {
@@ -22,34 +18,25 @@ class UpdateCloset extends Component {
 
     return (
       <Mutation
-        mutation={this.props.mutation}
-        refetchQueries={this.props.refetchQueries}
-        update={(cache, { data: { customerUpdate: { customer } } }) => {
-          const cachedCustomer = cache.readQuery(this.props.refetchQueries[0]).customer;
-          const { metafields: { edges: [{ node }] } } = customer;
-          cache.writeQuery({
-            query: this.props.refetchQueries[0].query,
-            data: { customer: _.assignIn(cachedCustomer, { metafield: node }) }
-          })
+        mutation={updateCustomerClosetMeta}
+        onCompleted={(data) => {
+          this.props.onUpdateCloset(JSON.parse(data.customerUpdate.customer.metafields.edges[0].node.value).items);
         }}
-        onCompleted={
-          (data) => console.log('updated customer closet', data)
-        }
       >
-        {(handleSubmit, { error, loading, data }) => {
+        {(handleSubmit, { error, loading }) => {
           const showError = error && (
             <Banner status="critical">{error.message}</Banner>
           );
           const showLoading = loading && (
             <div><Spinner size="small" color="teal" /> Updating Closet ... </div>
           );
-          const showSuccess = data && data.customerUpdate && showToast && (
+          const showSuccess = showToast && (
             <Toast
               content="Sucessfully updated"
               onDismiss={() => this.setState({ showToast: false })}
             />
           );
-          const { customer, closet, orders } = this.props;
+          const { customer, closet } = this.props;
 
           return (
             <Layout>
@@ -65,15 +52,16 @@ class UpdateCloset extends Component {
                       {
                         content: 'Update Closet',
                         onAction: () => {
-                          console.log('update customer closet:', customer.metafield.id, 'new closet:', closet, 'orders: ', orders);
                           const variables = {
-                            input: ENDLESS_CUSTOMER_UPDATE_CLOSET(
+                            input: ENDLESS_UPDATE_CLOSET(
                               customer,
-                              { items: closet, orders: orders }
+                              { items: closet }
                             )
                           };
                           handleSubmit({
                             variables: variables,
+                          }).then(() => {
+                            this.setState({ showToast: true });
                           });
                         },
                       },

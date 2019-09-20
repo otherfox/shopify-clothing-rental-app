@@ -1,18 +1,17 @@
 import {
-  Banner,
-  Form,
-  Layout,
-  PageActions,
-  Toast,
-  Spinner,
-  Button,
-  ThemeProvider
+  Banner, Form, Layout, PageActions, Toast, Spinner
 } from '@shopify/polaris';
 import { Mutation, useMutation, useQuery } from 'react-apollo';
 import _ from 'lodash';
 import { Component, useState, useEffect } from 'react';
 
-import { ENDLESS_ORDER_CREATE, ENDLESS_ITEM_RETURN_STATUS } from '../constants';
+import {
+  ENDLESS_CREATE_ORDER, ENDLESS_ITEM_SHIPPED_STATUS, ENDLESS_UPDATE_CLOSET
+} from '../graphql/variables';
+import {
+  createCustomerOrder, completeCustomerOrder, fulfillCustomerOrder, updateCustomerClosetMeta
+} from '../graphql/mutations';
+import { getLocations } from '../graphql/queries';
 
 class CreateClosetOrder extends Component {
   state = {
@@ -21,21 +20,15 @@ class CreateClosetOrder extends Component {
 
   render() {
     const {
-      customer, closet, membership, mutation, refetchQueries,
-      completeMutation, fullfillMutation, locationsQuery
+      customer, closet, membership, refetchQueries
     } = this.props;
 
     const { createdClosetCompleted } = this.state;
 
     return (
       <Mutation
-        mutation={mutation}
-        onCompleted={
-          (data) => {
-            console.log('created endless order', data)
-            this.setState({ createdClosetCompleted: true });
-          }
-        }
+        mutation={createCustomerOrder}
+        onCompleted={() => this.setState({ createdClosetCompleted: true })}
       >
         {(handleSubmit, { error, loading, data }) => {
 
@@ -46,12 +39,11 @@ class CreateClosetOrder extends Component {
             <div><Spinner size="small" color="teal" /> Creating Order ... </div>
           );
 
-          const showSuccess = data && data.draftOrderCreate && createdClosetCompleted && (
+          const showSuccess = data && createdClosetCompleted && (
             <CompleteOrder
               draftOrder={data.draftOrderCreate.draftOrder}
-              mutation={completeMutation}
-              fullfillMutation={fullfillMutation}
-              locationsQuery={locationsQuery}
+              closet={closet}
+              customer={customer}
               refetchQueries={refetchQueries} />
           );
 
@@ -67,17 +59,19 @@ class CreateClosetOrder extends Component {
                   <PageActions
                     primaryAction={[
                       {
-                        content: 'Create Closet Order',
+                        content: 'Update Closet',
                         onAction: () => {
-                          const items = closet.filter(i => i.status == ENDLESS_ITEM_RETURN_STATUS).map(i => i.id);
+                          let itemIds = []
+                          closet
+                            .filter(i => i.status == ENDLESS_ITEM_SHIPPED_STATUS)
+                            .forEach(i => i.variantIds.forEach(j => itemIds.push(j)));
                           const variables = {
-                            input: ENDLESS_ORDER_CREATE(
+                            input: ENDLESS_CREATE_ORDER(
                               customer,
                               membership,
-                              items
+                              itemIds
                             )
                           };
-                          console.log('create closet order variables:', JSON.stringify(variables));
                           handleSubmit({
                             variables: variables,
                           });
@@ -96,22 +90,29 @@ class CreateClosetOrder extends Component {
 }
 
 const CompleteOrder = props => {
-  const { draftOrder, mutation, refetchQueries, locationsQuery, fullfillMutation } = props;
+  const {
+    draftOrder, refetchQueries, closet, customer
+  } = props;
   const [completeOrderCompleted, setCompleteOrderCompleted] = useState(false);
-  const [draftOrderComplete, { loading, error, data, called }] = useMutation(mutation, {
-    onCompleted: (data) => {
-      console.log('order draft completed and marked paid: ', data);
-    }
+  const [draftOrderComplete, { loading, error, data, called }] = useMutation(completeCustomerOrder, {
+    onCompleted: () => setCompleteOrderCompleted(true)
   });
 
   useEffect(() => {
-    if (!data) {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    if (!called) {
       draftOrderComplete({
-        variables: { id: draftOrder.id, paymentPending: false }
+        variables: { id: draftOrder.id, paymentPending: false },
+        options: {
+          context: { fetchOptions: { signal: signal } }
+        }
       });
-      setCompleteOrderCompleted(true);
     }
-  });
+    return function cleanup() {
+      abortController.abort();
+    }
+  }, []);
 
   const showError = error && (
     <Banner status="critical">{error.message}</Banner>
@@ -121,11 +122,62 @@ const CompleteOrder = props => {
   );
 
   const showSuccess = data && data.draftOrderComplete && completeOrderCompleted && (
-    <FullfillOrder
-      draftOrder={data.draftOrderComplete.draftOrder}
-      mutation={fullfillMutation}
+    <GetLocation
+      orderId={data.draftOrderComplete.draftOrder.order.id}
+      closet={closet}
+      customer={customer}
       refetchQueries={refetchQueries}
-      locationsQuery={locationsQuery}
+    />
+  );
+
+  return (
+    <div>
+      {showSuccess}
+      {showError}
+      {showLoading}
+    </div>
+  )
+}
+
+const GetLocation = props => {
+  const [getLocationCompleted, setGetLocationCompleted] = useState(false);
+  const {
+    orderId, refetchQueries, closet, customer
+  } = props;
+  const { loading, error, data, called } = useQuery(getLocations, {
+    onCompleted: () => setGetLocationCompleted(true)
+  });
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    if (!called) {
+      console.log('calling get locations');
+      getLocations({
+        options: {
+          context: { fetchOptions: { signal: signal } }
+        }
+      });
+    }
+    return function cleanup() {
+      abortController.abort();
+    }
+  }, []);
+
+  const showError = error && (
+    <Banner status="critical">{queryError.message}</Banner>
+  );
+  const showLoading = loading && (
+    <div><Spinner size="small" color="teal" /> Assigning Location ... </div>
+  );
+
+  const showSuccess = getLocationCompleted && (
+    <FullfillOrder
+      locationId={data.locations.edges[0].node.id}
+      refetchQueries={refetchQueries}
+      closet={closet}
+      customer={customer}
+      draftOrderId={orderId}
     />
   );
 
@@ -139,45 +191,113 @@ const CompleteOrder = props => {
 }
 
 const FullfillOrder = props => {
-  const [showToast, setShowToast] = useState(true);
   const [fulfillOrderCompleted, setFullfillOrderCompleted] = useState(false);
-  const { draftOrder, mutation, refetchQueries, locationsQuery } = props;
+  const {
+    draftOrderId, locationId, refetchQueries, closet, customer
+  } = props;
   const [fulfillmentCreate, {
-    loading: mutationLoading,
-    error: mutationError,
-    called
-  }] = useMutation(mutation, {
-    onCompleted: data => {
-      console.log('order fulfilled: ', data);
-      setFullfillOrderCompleted(true);
-    }
+    loading, error, data, called
+  }] = useMutation(fulfillCustomerOrder, {
+    onCompleted: () => setFullfillOrderCompleted(true)
   });
-  const { loading: queryLoading, error: queryError, data } = useQuery(locationsQuery);
 
   useEffect(() => {
-    if (data && data.locations && !called) {
-      console.log('fulfill order:', draftOrder);
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    if (!called) {
       fulfillmentCreate({
-        variables: { input: { orderId: draftOrder.order.id, locationId: data.locations.edges[0].node.id } }
+        variables: {
+          input: {
+            orderId: draftOrderId,
+            locationId: locationId
+          }
+        },
+        options: {
+          context: { fetchOptions: { signal: signal } }
+        }
       });
+    }
+    return function cleanup() {
+      abortController.abort();
+    }
+  }, []);
+
+  const showError = error && (
+    <Banner status="critical">{error.message}</Banner>
+  );
+  const showLoading = loading && (
+    <div><Spinner size="small" color="teal" /> Fullfilling Order ... </div>
+  );
+  const showSuccess = fulfillOrderCompleted && (
+    <UpdateClosetFunc
+      refetchQueries={refetchQueries}
+      closet={closet}
+      customer={customer}
+      orderId={data.fulfillmentCreate.order.id}
+    />
+  );
+
+  return (
+    <div>
+      {showSuccess}
+      {showError}
+      {showLoading}
+    </div>
+  )
+}
+
+const UpdateClosetFunc = props => {
+  const {
+    refetchQueries, closet, orderId, customer
+  } = props;
+  const [showToast, setShowToast] = useState(true);
+  const [updateClosetCompleted, setUpdateClosetCompleted] = useState(false);
+  const [updateCloset, { loading, error, called }] = useMutation(updateCustomerClosetMeta, {
+    onCompleted: () => {
+      setUpdateClosetCompleted(true);
     }
   });
 
-  const showQueryError = queryError && (
-    <Banner status="critical">{queryError.message}</Banner>
+  useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    if (!called) {
+      // Add invoice number to newly shipped items
+      const newCloset = closet.map(i => {
+        if (i.status == ENDLESS_ITEM_SHIPPED_STATUS && !i.invoice) {
+          i.invoice = orderId;
+        }
+        return i;
+      });
+      const variables = {
+        input: ENDLESS_UPDATE_CLOSET(
+          customer,
+          { items: newCloset }
+        )
+      };
+      updateCloset({
+        variables: variables,
+        refetchQueries: refetchQueries,
+        options: {
+          context: { fetchOptions: { signal: signal } }
+        }
+      });
+    }
+    return function cleanup() {
+      abortController.abort();
+    }
+  }, []);
+
+  const showError = error && (
+    <Banner status="critical">{error.message}</Banner>
   );
-  const showQueryLoading = queryLoading && (
-    <div><Spinner size="small" color="teal" /> Assigning Location ... </div>
+  const showLoading = loading && (
+    <div><Spinner size="small" color="teal" /> Updating Closet ... </div>
   );
-  const showMutationError = mutationError && (
-    <Banner status="critical">{mutationError.message}</Banner>
-  );
-  const showMutationLoading = mutationLoading && (
-    <div><Spinner size="small" color="teal" /> Fullfilling Order ... </div>
-  );
-  const showSuccess = called && showToast && fulfillOrderCompleted && (
+
+  const showSuccess = updateClosetCompleted && showToast && (
     <Toast
-      content="Order Created, Completed, and Fullfilled"
+      content="Order created, completed, and fulfilled. Closet updated"
       onDismiss={() => setShowToast(false)}
     />
   );
@@ -185,10 +305,8 @@ const FullfillOrder = props => {
   return (
     <div>
       {showSuccess}
-      {showQueryError}
-      {showQueryLoading}
-      {showMutationError}
-      {showMutationLoading}
+      {showError}
+      {showLoading}
     </div>
   )
 }

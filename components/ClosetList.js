@@ -1,31 +1,12 @@
-import gql from 'graphql-tag';
 import {
-  Card,
-  ResourceList,
-  Stack,
-  TextStyle,
-  Spinner
+  Card, ResourceList, Spinner, Stack, TextStyle
 } from '@shopify/polaris';
 import { Query } from 'react-apollo';
 import Router from 'next/router';
 import { AppBridgeContext } from '@shopify/app-bridge-react/context';
 
-import { ENDLESS_CUSTOMERS_QUERY } from '../constants';
-
-// Get List of Endless Customers
-const GET_ENDLESS_CUSTOMERS = gql`
-  query getCustomers($query: String!) {
-    customers(first: 5, query: $query) {
-      edges {
-        node {
-          id
-          displayName
-          tags
-        }
-      }
-    }
-  }
-`;
+import { ENDLESS_CUSTOMERS_QUERY } from '../graphql/variables';
+import { getEndlessCustomers } from '../graphql/queries';
 
 class ClosetList extends React.Component {
   static contextType = AppBridgeContext;
@@ -39,7 +20,7 @@ class ClosetList extends React.Component {
 
   render() {
     return (
-      <Query query={GET_ENDLESS_CUSTOMERS} variables={ENDLESS_CUSTOMERS_QUERY}>
+      <Query query={getEndlessCustomers} variables={ENDLESS_CUSTOMERS_QUERY}>
         {({ data, loading, error }) => {
           if (loading) return <div><Spinner size="small" color="teal" /> Fetching Closets…</div>;
           if (error) return <div>{error.message}</div>;

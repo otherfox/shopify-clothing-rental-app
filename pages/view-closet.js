@@ -1,4 +1,3 @@
-import gql from 'graphql-tag';
 import {
   Page,
   Frame,
@@ -6,163 +5,90 @@ import {
   Banner
 } from '@shopify/polaris';
 import { Query } from 'react-apollo';
-// import Router from 'next/router';
 import _ from 'lodash';
 
 import AddClosetItems from '../components/AddClosetItems';
 import ClosetItemsList from '../components/ClosetItemsList';
-import CreateClosetOrder from '../components/CreateClosetOrder';
 import ResetCloset from '../components/ResetCloset';
 
-import { ENDLESS_CUSTOMER_QUERY, ENDLESS_TYPES } from '../constants';
-
-// Get Endless Customer by ID
-const GET_ENDLESS_CUSTOMER = gql`
-  query getCustomer($id: ID! $namespace: String! $key: String! $order_namespace: String! $order_key: String!) {
-    customer(id: $id) {
-      id
-      displayName
-      tags
-      metafield(namespace: $namespace key: $key) {
-        id
-        key
-        value
-      }
-      orders(first:10) {
-        edges {
-          node {
-            lineItems(first:20) {
-              edges {
-                node {
-                  product {
-                    id
-                  }
-                  variant {
-                    id
-                  }
-                }
-              }
-            }
-            metafield(namespace: $order_namespace key: $order_key) {
-              id
-              key
-              value
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-// Update customer meta
-const UPDATE_CUSTOMER_CLOSET_META = gql`
-  mutation updateCustomerClosetMeta($input: CustomerInput!) {
-    customerUpdate(input: $input) {
-      customer {
-        metafields(first:10) {
-          edges {
-            node {
-              id
-              namespace
-              key
-              value
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-// Create Endless Order
-const CREATE_CUSTOMER_ORDER = gql`
-  mutation draftOrderCreate($input: DraftOrderInput!) {
-    draftOrderCreate(input: $input) {
-      draftOrder {
-        id
-        order {
-          id
-        }
-      }
-      userErrors {
-        field
-        message
-      }
-    }
-  }
-`;
-
-// Complete Endless Order
-const COMPLETE_CUSTOMER_ORDER = gql`
-  mutation draftOrderComplete($id: ID!, $paymentPending: Boolean!) {
-    draftOrderComplete(id: $id, paymentPending: $paymentPending) {
-      draftOrder {
-        id
-        order {
-          id
-        }
-      }
-      userErrors {
-        field
-        message
-      }
-    }
-  }
-`;
-
-// Fulfill Endless Order
-const FULFILL_CUSTOMER_ORDER = gql`
-  mutation fulfillmentCreate($input: FulfillmentInput!) {
-    fulfillmentCreate(input: $input) {
-      fulfillment {
-        id
-      }
-      order {
-        id
-      }
-      userErrors {
-        field
-        message
-      }
-    }
-  }
-`;
-
-// Get Locations
-const GET_LOCATIONS = gql`
-  query getLocations {
-    locations(first:1) {
-      edges {
-        node {
-          id
-        }
-      }
-    }
-  }
-`;
+import {
+  ENDLESS_GET_CUSTOMER, ENDLESS_TYPES, ENDLESS_ITEM_SHIPPED_STATUS,
+  ENDLESS_ITEM_SELECTED_STATUS, ENDLESS_ITEM_DEFAULT_STATUS
+} from '../graphql/variables';
+import { getEndlessCustomer } from '../graphql/queries';
 
 class ViewCloset extends React.Component {
   state = {
     showItemPicker: false,
-    closet: []
+    closet: [],
+    orderLimit: 0,
+    selectionsLeft: 0,
+    orderId: '',
+    getEndlessCustomerComplete: false
   }
 
   static async getInitialProps({ query }) {
     return { query }
   }
 
+  countSelections = closet => {
+    // Check item statuses and count selections
+    let selectedCount = 0;
+    closet.forEach(i => {
+      if (i) {
+        switch (i.status) {
+          case ENDLESS_ITEM_SHIPPED_STATUS:
+            selectedCount++;
+            break;
+          case ENDLESS_ITEM_SELECTED_STATUS:
+            selectedCount++;
+            break;
+          default:
+            break;
+        }
+      }
+    });
+
+    return selectedCount;
+  }
+
+  getSelectionsLeft = (closet) => {
+    const selectedCount = this.countSelections(closet);
+    const { orderLimit } = this.state;
+
+    return orderLimit - selectedCount;
+  }
+
   handleHideAddItems = () => {
     this.setState({ showItemPicker: false });
   }
 
+  handleSelections = closet => {
+    console.log('handleSelection', closet);
+    const selectedCount = this.countSelections(closet);
+    const { orderLimit } = this.state;
+
+    return closet.map(i => {
+      switch (i.status) {
+        // if all items are selected move unselected items back into closet
+        case ENDLESS_ITEM_DEFAULT_STATUS:
+          i.order = (selectedCount >= orderLimit) ? '' : this.state.orderId;
+        default:
+          return i;
+      }
+    });;
+  }
+
   handleUpdateCloset = newCloset => {
-    console.log('handle update closet: ', newCloset);
-    this.setState({ closet: newCloset });
+    newCloset = this.handleSelections(newCloset);
+    const selectionsLeft = this.getSelectionsLeft(newCloset)
+    console.log('handle update closet: ', newCloset, ' and selectionsLeft: ', selectionsLeft);
+    this.setState({ closet: newCloset, selectionsLeft: selectionsLeft });
   }
 
   handleUpdateClosetItem = newItemProps => {
-    let newCloset = _.map(this.state.closet, function (obj) {
+    console.log('handle update item', newItemProps);
+    let newCloset = _.map(this.state.closet, obj => {
       return (obj.id == newItemProps.id) ?
         _.assignIn(obj, newItemProps) :
         obj;
@@ -171,23 +97,36 @@ class ViewCloset extends React.Component {
     this.handleUpdateCloset(newCloset);
   }
 
-  render() {
-    //const customerId = this.props.query.id;
-    const customerId = "gid://shopify/Customer/2150341050402";
+  handleUpdateOrderLimit = newLimit => {
+    this.setState({ orderLimit: newLimit });
+  }
 
-    const endlessCustomerVariables = ENDLESS_CUSTOMER_QUERY({ id: customerId });
-    const refetchQueries = [{ query: GET_ENDLESS_CUSTOMER, variables: endlessCustomerVariables }];
-    const { closet } = this.state;
+  render() {
+    const customerId = this.props.query.id;
+    //const customerId = "gid://shopify/Customer/2150341050402";
+
+    const endlessCustomerVariables = ENDLESS_GET_CUSTOMER({ id: customerId });
+    const refetchQueries = [{ query: getEndlessCustomer, variables: endlessCustomerVariables }];
+    const { closet, getEndlessCustomerComplete, selectionsLeft } = this.state;
 
 
     return (
       <Query
-        query={GET_ENDLESS_CUSTOMER}
+        query={getEndlessCustomer}
         variables={endlessCustomerVariables}
         onCompleted={(data) => {
-          if (data.customer.metafield !== null) {
-            this.setState({ closet: JSON.parse(data.customer.metafield.value).items });
+          // Set closet initial state
+          if (data.customer.metafield && data.customer.metafield !== null) {
+            const closetMeta = JSON.parse(data.customer.metafield.value)
+            this.setState({
+              closet: closetMeta.items,
+              orderLimit: closetMeta.orderLimit,
+              orderId: _.isEmpty(closetMeta.order) ? '' : closetMeta.order.id,
+              selectionsLeft: closetMeta.orderLimit - this.countSelections(closetMeta.items)
+            });
           }
+          // Set complete
+          this.setState({ getEndlessCustomerComplete: true });
         }
         }>
         {({ data, loading, error }) => {
@@ -195,28 +134,25 @@ class ViewCloset extends React.Component {
           const showError = error && (<Banner status="critical">{error.message}</Banner>);
           let showData = null;
 
-          if (data) {
-            console.log('view-closet data:', data);
-            console.log('view-closet closet state', this.state.closet)
-
+          if (getEndlessCustomerComplete) {
             const customer = data.customer;
             const membership =
               customer && _.intersection(customer.tags, ENDLESS_TYPES).length > 0 ?
                 _.intersection(customer.tags, ENDLESS_TYPES)[0] :
                 '';
             const metafield = customer && customer.metafield;
-            const orders = metafield && JSON.parse(customer.metafield.value).orders;
-            const order = orders && orders.length && orders[orders.length - 1];
-
-            console.log('metafield', metafield, 'orders', orders, 'order', order);
+            const order = metafield && JSON.parse(customer.metafield.value).order;
 
             let invalidStatusMsg = '';
 
             invalidStatusMsg += !metafield ? 'Customer closet metafield undefined. Recreate closet. ' : '';
             invalidStatusMsg += closet.length == 0 ? 'No items in closet. ' : '';
-            invalidStatusMsg += !order ? 'No orders exist.' : '';
 
-            showData = data && customer && (
+            console.log(
+              'metafield', metafield, 'order', order, 'closet state', closet, 'selectionsLeft', selectionsLeft
+            );
+
+            showData = (
               <Page
                 breadcrumbs={[{ content: 'Virtual Closets', url: '/' }]}
                 title={customer.displayName}
@@ -224,43 +160,31 @@ class ViewCloset extends React.Component {
                 primaryAction={{
                   content: 'Add Items',
                   onAction: () => {
-                    console.log('show item picker');
                     this.setState({ showItemPicker: true });
                   }
                 }}
               >
                 <AddClosetItems
                   customer={customer}
-                  order={order}
+                  hideAddItems={this.handleHideAddItems}
                   invalidStatusMsg={invalidStatusMsg}
-                  refetchQueries={refetchQueries}
-                  mutation={UPDATE_CUSTOMER_CLOSET_META}
                   onUpdateCloset={this.handleUpdateCloset}
                   open={this.state.showItemPicker}
-                  hideAddItems={this.handleHideAddItems} />
+                  order={order} />
                 <ClosetItemsList
-                  order={order}
-                  customer={customer}
                   closet={this.state.closet}
+                  customer={customer}
                   invalidStatusMsg={invalidStatusMsg}
-                  onUpdateCloset={this.handleUpdateClosetItem}
-                  mutation={UPDATE_CUSTOMER_CLOSET_META}
-                  refetchQueries={refetchQueries}
-                  orders={orders} />
-                <CreateClosetOrder
-                  mutation={CREATE_CUSTOMER_ORDER}
-                  completeMutation={COMPLETE_CUSTOMER_ORDER}
-                  fullfillMutation={FULFILL_CUSTOMER_ORDER}
-                  locationsQuery={GET_LOCATIONS}
-                  customer={customer}
                   membership={membership}
-                  closet={this.state.closet}
-                  refetchQueries={refetchQueries} />
+                  onUpdateClosetItem={this.handleUpdateClosetItem}
+                  onUpdateCloset={this.handleUpdateCloset}
+                  order={order}
+                  refetchQueries={refetchQueries}
+                  selectionsLeft={selectionsLeft} />
                 <ResetCloset
-                  mutation={UPDATE_CUSTOMER_CLOSET_META}
-                  customer={customer}
                   closet={this.state.closet}
-                  orders={orders}
+                  customer={customer}
+                  order={order}
                   refetchQueries={refetchQueries} />
               </Page>
             );

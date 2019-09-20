@@ -1,11 +1,5 @@
-import gql from 'graphql-tag';
 import {
-  Banner,
-  Form,
-  Layout,
-  PageActions,
-  Toast,
-  Spinner
+  Banner, Form, Layout, PageActions, Toast, Spinner
 } from '@shopify/polaris';
 import { Mutation } from 'react-apollo';
 import _ from 'lodash';
@@ -13,16 +7,8 @@ import { Component } from 'react';
 import moment from 'moment';
 import uuid from 'uuid/v1';
 
-import { ENDLESS_CUSTOMER_CREATE_CLOSET, ENDLESS_CUSTOMER_UPDATE_CLOSET, ENDLESS_DATE_FORMAT } from '../constants';
-
-// remove customer meta
-const REMOVE_CUSTOMER_CLOSET_META = gql`
-  mutation removeCustomerClosetMeta($input: MetafieldDeleteInput!) {
-    metafieldDelete(input: $input) {
-      deletedId
-    }
-  }
-`;
+import { ENDLESS_CREATE_CLOSET, ENDLESS_UPDATE_CLOSET, ENDLESS_DATE_FORMAT } from '../graphql/variables';
+import { updateCustomerClosetMeta, removeCustomerClosetMeta } from '../graphql/mutations';
 
 class ResetCloset extends Component {
   state = {
@@ -34,7 +20,7 @@ class ResetCloset extends Component {
 
     return (
       <Mutation
-        mutation={this.props.mutation}
+        mutation={updateCustomerClosetMeta}
         refetchQueries={this.props.refetchQueries}
         onCompleted={
           (data) => console.log('updated customer closet', data)
@@ -73,9 +59,9 @@ class ResetCloset extends Component {
 
                           handleSubmit({
                             variables: {
-                              input: ENDLESS_CUSTOMER_UPDATE_CLOSET(customer, {
+                              input: ENDLESS_UPDATE_CLOSET(customer, {
                                 items: this.props.closet,
-                                orders: this.props.orders.concat([{ id: uuid(), date: moment().format(ENDLESS_DATE_FORMAT) }])
+                                order: { id: uuid(), date: moment().format(ENDLESS_DATE_FORMAT) }
                               })
                             },
                           });
@@ -90,7 +76,7 @@ class ResetCloset extends Component {
                         onAction: () => {
                           console.log('recreate closet');
                           handleSubmit({
-                            variables: { input: ENDLESS_CUSTOMER_CREATE_CLOSET(customer) },
+                            variables: { input: ENDLESS_CREATE_CLOSET(customer) },
                           });
                         },
                       },
@@ -102,7 +88,7 @@ class ResetCloset extends Component {
                         onAction: () => {
                           console.log('remove closet metafield:', customer.metafield.id);
                           handleSubmit({
-                            mutation: REMOVE_CUSTOMER_CLOSET_META,
+                            mutation: removeCustomerClosetMeta,
                             variables: { input: { id: customer.metafield.id } },
                             refetchQueries: this.props.refetchQueries
                           })
