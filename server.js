@@ -7,6 +7,9 @@ const { verifyRequest } = require('@shopify/koa-shopify-auth');
 const session = require('koa-session');
 const { default: graphQLProxy } = require('@shopify/koa-shopify-graphql-proxy');
 const { ApiVersion } = require('@shopify/koa-shopify-graphql-proxy');
+const Router = require('koa-router');
+const { receiveWebhook, registerWebhook } = require('@shopify/koa-shopify-webhooks');
+const { verifyProxy } = require('./middleware');
 
 dotenv.config();
 
@@ -15,7 +18,7 @@ const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-const { SHOPIFY_API_SECRET_KEY, SHOPIFY_API_KEY } = process.env;
+const { SHOPIFY_API_SECRET_KEY, SHOPIFY_API_KEY, HOST } = process.env;
 
 app.prepare().then(() => {
   const server = new Koa();
@@ -31,22 +34,50 @@ app.prepare().then(() => {
         'read_all_orders', 'read_orders', 'write_orders', 'read_draft_orders',
         'write_draft_orders', 'write_fulfillments', 'read_fulfillments'
       ],
-      afterAuth(ctx) {
+      async afterAuth(ctx) {
         const { shop, accessToken } = ctx.session;
         ctx.cookies.set('shopOrigin', shop, { httpOnly: false });
         ctx.redirect('/');
+
+        const registration = await registerWebhook({
+          address: `${HOST}/webhooks/products/create`,
+          topic: 'PRODUCTS_CREATE',
+          accessToken,
+          shop,
+        });
+
+        if (registration.success) {
+          console.log('Successfully registered webhook!');
+        } else {
+          console.log('Failed to register webhook', JSON.stringify(registration.result));
+        }
       },
     }),
   );
 
+  const webhook = receiveWebhook({ secret: SHOPIFY_API_SECRET_KEY });
+  const proxy = verifyProxy({ secret: SHOPIFY_API_SECRET_KEY });
+  const router = new Router();
+
+  router.post('/webhooks/products/create', webhook, (ctx) => {
+    console.log('received webhook: ', ctx.state.webhook);
+  });
+
+  router.get('/endless', proxy, (ctx) => {
+    console.log('worked');
+    res.set('Content-Type', 'application/liquid');
+    ctx.respond = false;
+    ctx.res.statusCode = 200;
+  });
+
   server.use(graphQLProxy({ version: ApiVersion.April19 }));
-  server.use(verifyRequest());
-  server.use(async (ctx) => {
+  router.get('*', verifyRequest(), async (ctx) => {
     await handle(ctx.req, ctx.res);
     ctx.respond = false;
     ctx.res.statusCode = 200;
-
   });
+  server.use(router.allowedMethods());
+  server.use(router.routes());
 
   server.listen(port, () => {
     console.log(`> Ready on http://localhost:${port}`);
