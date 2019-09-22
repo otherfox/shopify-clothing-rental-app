@@ -1,4 +1,5 @@
-const verifyHmac = require('../helpers').verifyHmac;
+const crypto = require('crypto');
+
 /**
  * Express middleware to verify hmac and requests from shopify.
  * This middleware adds two items to the req object:
@@ -12,22 +13,27 @@ const verifyHmac = require('../helpers').verifyHmac;
 function verifyProxy(_a) {
   let { secret } = _a;
   function verifyProxyMiddleware(ctx, next) {
-    let hmac;
-    let data;
+    var parameters = [];
+    for (var key in ctx.query) {
+      if (key != 'signature') {
+        parameters.push(key + '=' + ctx.query[key])
+      }
+    }
+    var message = parameters.sort().join('');
+    var signature = Buffer.from(ctx.query.signature, 'utf-8');
+    var digest = Buffer.from(crypto.createHmac('sha256', secret).update(message).digest('hex'), 'utf-8');
+
     try {
-      hmac = ctx.get('X-Shopify-Hmac-SHA256');
-      data = ctx.request.rawBody;
-    } catch (e) {
-      console.log(`Proxy request failed from: ${ctx.get('X-Shopify-Shop-Domain')}`);
-      ctx.res.statusCode = 200;
+      if (!crypto.timingSafeEqual(digest, signature)) {
+        throw new Error('Security Error - The request was not authentic');
+      }
+    } catch (err) {
+      err.message = 'Security Error - The request was not authentic';
+      throw err;
     }
 
-    if (verifyHmac(JSON.stringify(data), hmac, secret)) {
-      console.log('proxy request passed');
-      return next();
-    }
-
-    return ctx.res.statusCode = 200;
+    console.log('Proxy Success!');
+    return next();
   }
   return verifyProxyMiddleware;
 }

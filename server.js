@@ -63,15 +63,17 @@ app.prepare().then(() => {
     console.log('received webhook: ', ctx.state.webhook);
   });
 
-  router.get('/endless', proxy, (ctx) => {
-    console.log('worked');
-    res.set('Content-Type', 'application/liquid');
-    ctx.respond = false;
+  router.get('/endless', proxy, async (ctx) => {
+    console.log('endless');
+    ctx.body = {
+      status: 'success',
+      message: 'hello world!'
+    };
     ctx.res.statusCode = 200;
   });
 
   server.use(graphQLProxy({ version: ApiVersion.April19 }));
-  router.get('*', verifyRequest(), async (ctx) => {
+  router.get('(.*)', verifyRequest(), async (ctx) => {
     await handle(ctx.req, ctx.res);
     ctx.respond = false;
     ctx.res.statusCode = 200;

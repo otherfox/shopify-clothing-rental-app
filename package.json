@@ -37,6 +37,7 @@
     "react-apollo": "^3.0.1",
     "react-dom": "^16.9.0",
     "store-js": "^2.0.4",
-    "uuid": "^3.3.3"
+    "uuid": "^3.3.3",
+    "valid-shopify-request": "^1.0.0"
   }
 }
