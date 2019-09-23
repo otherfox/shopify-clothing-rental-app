@@ -1,6 +1,6 @@
-import gql from 'graphql-tag';
+const gql = require('graphql-tag');
 
-const updateCustomerClosetMeta = gql`
+const updateCustomerClosetMetaQuery = `
   mutation updateCustomerClosetMeta($input: CustomerInput!) {
     customerUpdate(input: $input) {
       customer {
@@ -19,4 +19,9 @@ const updateCustomerClosetMeta = gql`
   }
 `;
 
-export default updateCustomerClosetMeta;
+const updateCustomerClosetMeta = gql`${updateCustomerClosetMetaQuery}`;
+
+module.exports = {
+  updateCustomerClosetMeta,
+  updateCustomerClosetMetaQuery
+}; 

@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+const gql = require('graphql-tag');
 
 const completeCustomerOrder = gql`
   mutation draftOrderComplete($id: ID!, $paymentPending: Boolean!) {
@@ -17,4 +17,4 @@ const completeCustomerOrder = gql`
   }
 `;
 
-export default completeCustomerOrder;
+module.exports = { completeCustomerOrder };

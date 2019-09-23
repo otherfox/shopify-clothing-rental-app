@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+const gql = require('graphql-tag');
 
 const fulfillCustomerOrder = gql`
   mutation fulfillmentCreate($input: FulfillmentInput!) {
@@ -17,4 +17,4 @@ const fulfillCustomerOrder = gql`
   }
 `;
 
-export default fulfillCustomerOrder;
+module.exports = { fulfillCustomerOrder };

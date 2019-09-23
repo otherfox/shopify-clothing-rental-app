@@ -1,20 +1,21 @@
-import _ from 'lodash';
-import moment from 'moment';
+const _ = require('lodash');
+const moment = require('moment');
 
 // Endless Types
-export const ENDLESS_TYPES = ['Endless II', 'Endless III'];
+const ENDLESS_TYPES = ['Endless II', 'Endless III'];
 
 // Closet Defualt Variables
-export const ENDLESS_ITEM_DEFAULT_STATUS = 'In Closet';
-export const ENDLESS_ITEM_SELECTED_STATUS = 'Selected';
-export const ENDLESS_ITEM_RETURNED_STATUS = 'Returned';
-export const ENDLESS_ITEM_SHIPPED_STATUS = 'Shipped';
-export const ENDLESS_ITEM_REMOVE_STATUS = 'Remove';
+const ENDLESS_ITEM_DEFAULT_STATUS = 'In Closet';
+const ENDLESS_ITEM_SELECTED_STATUS = 'Selected';
+const ENDLESS_ITEM_RETURNED_STATUS = 'Returned';
+const ENDLESS_ITEM_SHIPPED_STATUS = 'Shipped';
+const ENDLESS_ITEM_REMOVE_STATUS = 'Remove';
 
-export const ENDLESS_CLOSET_EMPTY = {
+const ENDLESS_CLOSET_EMPTY = {
   keys: [
     'id', // STRING Shopify Product ID
     'variantIds', // ARRAY [ <STRING Variant Id>, <STRING Variant Id ]
+    'hearted', // BOOLEAN 
     'note', // STRING
     'status', // STRING Status values below
     'order', // STRING Customer Order ID
@@ -33,21 +34,21 @@ export const ENDLESS_CLOSET_EMPTY = {
   order: {}, // OBJECT { id: <STRING Order ID i.e. "ac2627e0-d8b6-11e9-8ebf-e1ad09d4e300", date: <STRING Date i.e. "01/01/20 01:00:00 AM"> }
   items: [] // COLLECTION [{ <KEYS described above> }]
 };
-export const ENDLESS_CLOSET_NAMESPACE = 'cc-virtual-closet';
-export const ENDLESS_CLOSET_KEY = 'queue';
-export const ENDLESS_DATE_FORMAT = 'MM/DD/YY h:mm:ss a';
-export const ENDLESS_SHIPPED_STATUSES = [
+const ENDLESS_CLOSET_NAMESPACE = 'cc-virtual-closet';
+const ENDLESS_CLOSET_KEY = 'queue';
+const ENDLESS_DATE_FORMAT = 'MM/DD/YY h:mm:ss a';
+const ENDLESS_SHIPPED_STATUSES = [
   ENDLESS_ITEM_SHIPPED_STATUS,
   ENDLESS_ITEM_RETURNED_STATUS,
   ENDLESS_ITEM_REMOVE_STATUS
 ];
 
 // Order variables
-export const ENDLESS_ORDER_NAMESPACE = 'cc-virtual-orders';
-export const ENDLESS_ORDER_KEY = 'returns';
+const ENDLESS_ORDER_NAMESPACE = 'cc-virtual-orders';
+const ENDLESS_ORDER_KEY = 'returns';
 
 // Customer(s) Query Variables
-export const ENDLESS_GET_CUSTOMER = customer => {
+const ENDLESS_GET_CUSTOMER = customer => {
   return {
     id: customer.id,
     namespace: ENDLESS_CLOSET_NAMESPACE,
@@ -56,10 +57,10 @@ export const ENDLESS_GET_CUSTOMER = customer => {
     order_key: ENDLESS_ORDER_KEY
   };
 };
-export const ENDLESS_CUSTOMERS_QUERY = { query: ENDLESS_TYPES.map(v => 'tags:' + v).join(' AND ') };
+const ENDLESS_CUSTOMERS_TAGS = { query: ENDLESS_TYPES.map(v => 'tags:' + v).join(' AND ') };
 
 // Customer(s) Mutation Variables
-export const ENDLESS_ADD_ITEMS = (oldCloset, newItems) => {
+const ENDLESS_ADD_ITEMS = (oldCloset, newItems) => {
   const order = JSON.parse(oldCloset).order;
   return _.values(_.merge(
     _.keyBy(JSON.parse(oldCloset).items, 'id'),
@@ -67,6 +68,7 @@ export const ENDLESS_ADD_ITEMS = (oldCloset, newItems) => {
       id: i.id,
       variantIds: i.variantIds,
       note: '',
+      headted: false,
       status: ENDLESS_ITEM_DEFAULT_STATUS,
       order: order ? order.id : '',
       invoice: '',
@@ -75,7 +77,7 @@ export const ENDLESS_ADD_ITEMS = (oldCloset, newItems) => {
   ));
 }
 
-export const ENDLESS_CREATE_CLOSET = customer => {
+const ENDLESS_CREATE_CLOSET = customer => {
   return {
     id: customer.id,
     metafields: [
@@ -89,7 +91,7 @@ export const ENDLESS_CREATE_CLOSET = customer => {
   };
 };
 
-export const ENDLESS_CLEAN_CLOSET = closet => {
+const ENDLESS_CLEAN_CLOSET = closet => {
   // remove returned and remove items
   return closet.filter(i => (
     i.status !== ENDLESS_ITEM_REMOVE_STATUS &&
@@ -97,7 +99,7 @@ export const ENDLESS_CLEAN_CLOSET = closet => {
   ));
 }
 
-export const ENDLESS_UPDATE_CLOSET = (customer, value) => {
+const ENDLESS_UPDATE_CLOSET = (customer, value) => {
   value.items = value.items.length ? ENDLESS_CLEAN_CLOSET(value.items) : value.items;
 
   return {
@@ -116,11 +118,34 @@ export const ENDLESS_UPDATE_CLOSET = (customer, value) => {
 
 // Order Mutation Variables
 
-export const ENDLESS_CREATE_ORDER = (customer, membership, itemIds) => {
+const ENDLESS_CREATE_ORDER = (customer, membership, itemIds) => {
   const items = itemIds.map(id => ({ variantId: id, quantity: 1 }));
   return {
     customerId: customer.id,
     lineItems: items,
     tags: membership
   };
+}
+
+module.export = {
+  ENDLESS_DATE_FORMAT,
+  ENDLESS_CLOSET_KEY,
+  ENDLESS_CLOSET_NAMESPACE,
+  ENDLESS_CLOSET_EMPTY,
+  ENDLESS_ITEM_REMOVE_STATUS,
+  ENDLESS_ITEM_SHIPPED_STATUS,
+  ENDLESS_ITEM_RETURNED_STATUS,
+  ENDLESS_ITEM_SELECTED_STATUS,
+  ENDLESS_ITEM_DEFAULT_STATUS,
+  ENDLESS_TYPES,
+  ENDLESS_CREATE_ORDER,
+  ENDLESS_UPDATE_CLOSET,
+  ENDLESS_CREATE_CLOSET,
+  ENDLESS_CLEAN_CLOSET,
+  ENDLESS_ADD_ITEMS,
+  ENDLESS_CUSTOMERS_TAGS,
+  ENDLESS_GET_CUSTOMER,
+  ENDLESS_ORDER_KEY,
+  ENDLESS_ORDER_NAMESPACE,
+  ENDLESS_SHIPPED_STATUSES
 }

@@ -1,12 +1,13 @@
-import getCustomer from './getCustomer';
-import getEndlessCustomer from './getEndlessCustomer';
-import getEndlessCustomers from './getEndlessCustomers';
-import getLocations from './getLocations';
-import getProducts from './getProducts';
+const { getCustomer } = require('./getCustomer');
+const { getEndlessCustomer, getEndlessCustomerQuery } = require('./getEndlessCustomer');
+const { getEndlessCustomers } = require('./getEndlessCustomers');
+const { getLocations } = require('./getLocations');
+const { getProducts } = require('./getProducts');
 
-export {
+module.exports = {
   getCustomer,
   getEndlessCustomer,
+  getEndlessCustomerQuery,
   getEndlessCustomers,
   getLocations,
   getProducts

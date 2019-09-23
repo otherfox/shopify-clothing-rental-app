@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+const gql = require('graphql-tag');
 
 // Get Locations
 const getLocations = gql`
@@ -13,4 +13,6 @@ const getLocations = gql`
   }
 `;
 
-export default getLocations;
+module.exports = {
+  getLocations
+};

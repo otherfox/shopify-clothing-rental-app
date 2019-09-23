@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+const gql = require('graphql-tag');
 
 // Get Customer by ID
 const getCustomer = gql`
@@ -31,4 +31,6 @@ const getCustomer = gql`
   }
 `;
 
-export default getCustomer;
+module.exports = {
+  getCustomer
+};

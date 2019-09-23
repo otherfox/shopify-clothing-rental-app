@@ -1,14 +1,15 @@
-import completeCustomerOrder from './completeCustomerOrder';
-import createCustomerOrder from './createCustomerOrder';
-import fulfillCustomerOrder from './fulfillCustomerOrder';
-import removeCustomerClosetMeta from './removeCustomerClosetMeta';
-import updateCustomerClosetMeta from './updateCustomerClosetMeta';
+const { completeCustomerOrder } = require('./completeCustomerOrder');
+const { createCustomerOrder } = require('./createCustomerOrder');
+const { fulfillCustomerOrder } = require('./fulfillCustomerOrder');
+const { removeCustomerClosetMeta } = require('./removeCustomerClosetMeta');
+const { updateCustomerClosetMeta, updateCustomerClosetMetaQuery } = require('./updateCustomerClosetMeta');
 
 
-export {
+module.exports = {
   completeCustomerOrder,
   createCustomerOrder,
   fulfillCustomerOrder,
   removeCustomerClosetMeta,
-  updateCustomerClosetMeta
+  updateCustomerClosetMeta,
+  updateCustomerClosetMetaQuery
 };

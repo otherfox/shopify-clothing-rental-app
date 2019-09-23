@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+const gql = require('graphql-tag');
 
 const removeCustomerClosetMeta = gql`
   mutation removeCustomerClosetMeta($input: MetafieldDeleteInput!) {
@@ -8,4 +8,4 @@ const removeCustomerClosetMeta = gql`
   }
 `;
 
-export default removeCustomerClosetMeta;
+module.exports = { removeCustomerClosetMeta };

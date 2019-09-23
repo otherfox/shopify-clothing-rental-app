@@ -5,7 +5,7 @@ import { Query } from 'react-apollo';
 import Router from 'next/router';
 import { AppBridgeContext } from '@shopify/app-bridge-react/context';
 
-import { ENDLESS_CUSTOMERS_QUERY } from '../graphql/variables';
+import { ENDLESS_CUSTOMERS_TAGS } from '../graphql/variables';
 import { getEndlessCustomers } from '../graphql/queries';
 
 class ClosetList extends React.Component {
@@ -20,7 +20,7 @@ class ClosetList extends React.Component {
 
   render() {
     return (
-      <Query query={getEndlessCustomers} variables={ENDLESS_CUSTOMERS_QUERY}>
+      <Query query={getEndlessCustomers} variables={ENDLESS_CUSTOMERS_TAGS}>
         {({ data, loading, error }) => {
           if (loading) return <div><Spinner size="small" color="teal" /> Fetching Closets…</div>;
           if (error) return <div>{error.message}</div>;

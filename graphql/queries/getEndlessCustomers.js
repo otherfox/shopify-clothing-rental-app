@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+const gql = require('graphql-tag');
 
 const getEndlessCustomers = gql`
   query getCustomers($query: String!) {
@@ -14,4 +14,6 @@ const getEndlessCustomers = gql`
   }
 `;
 
-export default getEndlessCustomers;
+module.exports = {
+  getEndlessCustomers
+};
