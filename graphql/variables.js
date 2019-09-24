@@ -11,7 +11,7 @@ const ENDLESS_ITEM_RETURNED_STATUS = 'Returned';
 const ENDLESS_ITEM_SHIPPED_STATUS = 'Shipped';
 const ENDLESS_ITEM_REMOVE_STATUS = 'Remove';
 
-const ENDLESS_CLOSET_EMPTY = {
+const ENDLESS_CLOSET_EMPTY = (orderLimit) => ({
   keys: [
     'id', // STRING Shopify Product ID
     'variantIds', // ARRAY [ <STRING Variant Id>, <STRING Variant Id ]
@@ -29,11 +29,11 @@ const ENDLESS_CLOSET_EMPTY = {
     ENDLESS_ITEM_RETURNED_STATUS,
     ENDLESS_ITEM_REMOVE_STATUS
   ],
-  orderLimit: 3, // NUMBER Amount of items that can be ordered
+  orderLimit: orderLimit, // NUMBER Amount of items that can be ordered
   closetLimit: 10, // NUMBER Amount of items that can be in the closet
   order: {}, // OBJECT { id: <STRING Order ID i.e. "ac2627e0-d8b6-11e9-8ebf-e1ad09d4e300", date: <STRING Date i.e. "01/01/20 01:00:00 AM"> }
   items: [] // COLLECTION [{ <KEYS described above> }]
-};
+});
 const ENDLESS_CLOSET_NAMESPACE = 'cc-virtual-closet';
 const ENDLESS_CLOSET_KEY = 'queue';
 const ENDLESS_DATE_FORMAT = 'MM/DD/YY h:mm:ss a';
@@ -57,7 +57,7 @@ const ENDLESS_GET_CUSTOMER = customer => {
     order_key: ENDLESS_ORDER_KEY
   };
 };
-const ENDLESS_CUSTOMERS_TAGS = { query: ENDLESS_TYPES.map(v => 'tags:' + v).join(' AND ') };
+const ENDLESS_CUSTOMERS_TAGS = { query: `tags:${ENDLESS_TYPES[0]}` };
 
 // Customer(s) Mutation Variables
 const ENDLESS_ADD_ITEMS = (oldCloset, newItems) => {
@@ -77,19 +77,17 @@ const ENDLESS_ADD_ITEMS = (oldCloset, newItems) => {
   ));
 }
 
-const ENDLESS_CREATE_CLOSET = customer => {
-  return {
-    id: customer.id,
-    metafields: [
-      {
-        namespace: ENDLESS_CLOSET_NAMESPACE,
-        key: ENDLESS_CLOSET_KEY,
-        value: JSON.stringify(ENDLESS_CLOSET_EMPTY),
-        valueType: 'JSON_STRING'
-      }
-    ]
-  };
-};
+const ENDLESS_CREATE_CLOSET = (customer, orderLimit) => ({
+  id: customer.id,
+  metafields: [
+    {
+      namespace: ENDLESS_CLOSET_NAMESPACE,
+      key: ENDLESS_CLOSET_KEY,
+      value: JSON.stringify(ENDLESS_CLOSET_EMPTY(orderLimit)),
+      valueType: 'JSON_STRING'
+    }
+  ]
+});
 
 const ENDLESS_CLEAN_CLOSET = closet => {
   // remove returned and remove items
@@ -127,7 +125,7 @@ const ENDLESS_CREATE_ORDER = (customer, membership, itemIds) => {
   };
 }
 
-module.export = {
+module.exports = {
   ENDLESS_DATE_FORMAT,
   ENDLESS_CLOSET_KEY,
   ENDLESS_CLOSET_NAMESPACE,

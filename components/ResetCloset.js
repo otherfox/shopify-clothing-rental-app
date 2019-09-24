@@ -75,8 +75,10 @@ class ResetCloset extends Component {
                         content: 'Recreate Closet',
                         onAction: () => {
                           console.log('recreate closet');
+                          const orderLimit = this.props.membership.indexOf('ENDLESS III') > -1 ?
+                            3 : 2;
                           handleSubmit({
-                            variables: { input: ENDLESS_CREATE_CLOSET(customer) },
+                            variables: { input: ENDLESS_CREATE_CLOSET(customer, orderLimit) },
                           });
                         },
                       },

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon -w server.js server.js",
+    "dev": "nodemon server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
     "tunnel:start": "ssh -R charlottes-closet:80:localhost:3000 serveo.net",
@@ -29,6 +29,7 @@
     "isomorphic-fetch": "^2.2.1",
     "js-cookie": "^2.2.1",
     "koa": "^2.8.1",
+    "koa-body": "^4.1.1",
     "koa-router": "^7.4.0",
     "koa-session": "^5.12.3",
     "lodash": "^4.17.15",

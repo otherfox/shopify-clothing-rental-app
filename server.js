@@ -5,6 +5,7 @@ const { default: createShopifyAuth } = require('@shopify/koa-shopify-auth');
 const dotenv = require('dotenv');
 const { verifyRequest } = require('@shopify/koa-shopify-auth');
 const session = require('koa-session');
+const koaBody = require('koa-body');
 const { default: graphQLProxy } = require('@shopify/koa-shopify-graphql-proxy');
 const { ApiVersion } = require('@shopify/koa-shopify-graphql-proxy');
 const Router = require('koa-router');
@@ -13,6 +14,7 @@ const { verifyProxy } = require('./middleware');
 
 // Routes
 const { proxyRoute } = require('./routes/proxy');
+const { webhookRoute } = require('./routes/webhook');
 
 dotenv.config();
 
@@ -77,6 +79,7 @@ app.prepare().then(() => {
   );
 
   const webhook = receiveWebhook({ secret: SHOPIFY_API_SECRET_KEY });
+  const webhookRouteFunc = webhookRoute({ shop: SHOP, apiKey: PRIVATE_APP_API_KEY, password: PRIVATE_APP_PASSWORD });
   const proxy = verifyProxy({ secret: SHOPIFY_API_SECRET_KEY });
   const proxyRouteFunc = proxyRoute({ shop: SHOP, apiKey: PRIVATE_APP_API_KEY, password: PRIVATE_APP_PASSWORD });
   const router = new Router();
@@ -85,17 +88,13 @@ app.prepare().then(() => {
 
   // Webhook Routes
 
-  router.post('/webhooks/customers/create', webhook, (ctx) => {
-    console.log('received customer create webhook: ', ctx.request.body);
-  });
+  router.post('/webhooks/customers/create', webhook, webhookRouteFunc);
 
-  router.post('/webhooks/customers/update', webhook, (ctx) => {
-    console.log('received customer update webhook: ', ctx.request.body);
-  });
+  router.post('/webhooks/customers/update', webhook, webhookRouteFunc);
 
   // Proxy Routes
 
-  router.post('/endless', proxy, proxyRouteFunc);
+  router.post('/endless', proxy, koaBody(), proxyRouteFunc);
 
   router.get('(.*)', verifyRequest(), async (ctx) => {
     await handle(ctx.req, ctx.res);

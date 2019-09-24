@@ -102,8 +102,8 @@ class ViewCloset extends React.Component {
   }
 
   render() {
-    const customerId = this.props.query.id;
-    //const customerId = "gid://shopify/Customer/2150341050402";
+    //const customerId = this.props.query.id;
+    const customerId = "gid://shopify/Customer/2304456818722";
 
     const endlessCustomerVariables = ENDLESS_GET_CUSTOMER({ id: customerId });
     const refetchQueries = [{ query: getEndlessCustomer, variables: endlessCustomerVariables }];
@@ -184,6 +184,7 @@ class ViewCloset extends React.Component {
                 <ResetCloset
                   closet={this.state.closet}
                   customer={customer}
+                  membership={membership}
                   order={order}
                   refetchQueries={refetchQueries} />
               </Page>

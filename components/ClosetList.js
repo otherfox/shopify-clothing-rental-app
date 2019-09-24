@@ -24,7 +24,7 @@ class ClosetList extends React.Component {
         {({ data, loading, error }) => {
           if (loading) return <div><Spinner size="small" color="teal" /> Fetching Closets…</div>;
           if (error) return <div>{error.message}</div>;
-
+          console.log('get closets: ', data);
           return (
             <Card>
               <ResourceList
