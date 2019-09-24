@@ -6,8 +6,9 @@ import { createHttpLink } from 'apollo-link-http';
 import fetch from 'node-fetch';
 import '@shopify/polaris/styles.css';
 import Cookies from 'js-cookie';
-import ApolloClient from 'apollo-boost';
+import ApolloClient from 'apollo-client';
 import { ApolloProvider } from 'react-apollo';
+import { InMemoryCache } from 'apollo-cache-inmemory';
 
 const client = new ApolloClient({
   fetchOptions: {
@@ -16,7 +17,8 @@ const client = new ApolloClient({
   link: createHttpLink({
     uri: '/graphql',
     fetch: fetch
-  })
+  }),
+  cache: new InMemoryCache()
 });
 
 
