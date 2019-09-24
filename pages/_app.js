@@ -24,7 +24,6 @@ const client = new ApolloClient({
 
 class MyApp extends App {
   render() {
-    console.log(client);
     const { Component, pageProps } = this.props;
     const config = { apiKey: API_KEY, shopOrigin: Cookies.get("shopOrigin"), forceRedirect: true };
     return (
