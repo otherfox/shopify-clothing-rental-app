@@ -1,62 +1,58 @@
-import { Page, Layout, Banner, Spinner, Toast, ThemeProvider } from '@shopify/polaris';
-import { ResourcePicker, TitleBar } from '@shopify/app-bridge-react';
+import { Banner, Layout, Page, Spinner } from '@shopify/polaris';
+import { ResourcePicker } from '@shopify/app-bridge-react';
 import { Mutation } from 'react-apollo';;
 import _ from 'lodash';
 
-import { ENDLESS_CUSTOMER_UPDATE_CLOSET, ENDLESS_CUSTOMER_ADD_ITEMS } from '../constants'
+import { ENDLESS_ADD_ITEMS, ENDLESS_UPDATE_CLOSET } from '../graphql/variables';
+import { updateCustomerClosetMeta } from '../graphql/mutations';
 
-
-class AddClosetItems extends React.Component {
-  state = {
-    showToast: false
-  };
-
-  render() {
-    let { showToast } = this.state;
-    return (
-      <Page>
-        <Mutation
-          mutation={this.props.mutation}
-          refetchQueries={this.props.refetchQueries}
-        >
-          {(handleSubmit, { error, loading, data }) => {
-            const showError = error && (
-              <Banner status="critical">{error.message}</Banner>
-            );
-            const customer = this.props.customer;
-            return (
-              <Layout>
-                <Layout.Section>
-                  {showError}
-                </Layout.Section>
-                <Layout.Section>
-                  <ResourcePicker
-                    resourceType="Product"
-                    showVariants={false}
-                    open={this.props.open}
-                    onSelection={(resources) => {
-                      const ids = _.map(resources.selection, 'id');
-                      const newCloset = ENDLESS_CUSTOMER_ADD_ITEMS(customer.metafield.value, ids);
-                      const variables = { input: ENDLESS_CUSTOMER_UPDATE_CLOSET(customer, newCloset) };
-
-                      this.props.onUpdateCloset(newCloset);
-                      this.props.hideAddItems();
-
-                      handleSubmit({
-                        variables: variables,
-                        refetchQueries: this.props.refetchQueries
-                      });
-                    }}
-                    onCancel={() => this.props.hideAddItems()}
-                  />
-                </Layout.Section>
-              </Layout>
-            )
-          }}
-        </Mutation>
-      </Page >
-    );
-  }
+const AddClosetItems = props => {
+  return (
+    <Page>
+      <Mutation
+        mutation={updateCustomerClosetMeta}
+        onCompleted={data => {
+          props.onUpdateCloset(JSON.parse(data.customerUpdate.customer.metafields.edges[0].node.value).items);
+          props.hideAddItems();
+        }}
+      >
+        {(handleSubmit, { error, loading }) => {
+          const showError = error && (
+            <Banner status="critical">{error.message}</Banner>
+          );
+          const showLoading = loading && (
+            <div><Spinner size="small" color="teal" /> Adding Items ... </div>
+          );
+          const customer = props.customer;
+          return (
+            <Layout>
+              <Layout.Section>
+                {showError}
+              </Layout.Section>
+              <Layout.Section>
+                <ResourcePicker
+                  resourceType="Product"
+                  showVariants={true}
+                  open={props.open}
+                  onSelection={(resources) => {
+                    const items = resources.selection.map(i => ({ id: i.id, variantIds: i.variants.map(v => v.id), order: props.order }));
+                    const newCloset = ENDLESS_ADD_ITEMS(customer.metafield.value, items, true);
+                    const variables = { input: ENDLESS_UPDATE_CLOSET(customer, { items: newCloset }) };
+                    handleSubmit({
+                      variables: variables,
+                      refetchQueries: props.refetchQueries
+                    });
+                  }}
+                  onCancel={() => props.hideAddItems()}
+                />
+              </Layout.Section>
+              {showLoading}
+            </Layout>
+          )
+        }}
+      </Mutation>
+    </Page >
+  );
 }
 
 export default AddClosetItems;

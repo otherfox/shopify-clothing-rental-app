@@ -1,168 +1,118 @@
-import gql from 'graphql-tag';
 import { Query } from 'react-apollo';
 import {
-  Card,
-  ResourceList,
-  Stack,
-  TextStyle,
-  Thumbnail,
-  Select,
-  Spinner,
-  Tag,
-  ThemeProvider
+  Spinner, Layout
 } from '@shopify/polaris';
 import { Component } from 'react';
-import moment from 'moment';
+import _ from 'lodash';
 
-import { ENDLESS_STATUS_DATE_FORMAT } from '../constants';
+import ClosetInvoicesSection from '../components/ClosetInvoicesSection';
+import ClosetItemSection from '../components/ClosetItemSection';
 
-const GET_PRODUCTS_BY_ID = gql`
-  query getProducts($ids: [ID!]!) {
-    nodes(ids: $ids) {
-      ... on Product {
-        title
-        handle
-        descriptionHtml
-        id
-        images(first: 1) {
-          edges {
-            node {
-              originalSrc
-              altText
-            }
-          }
-        }
-        variants(first: 1) {
-          edges {
-            node {
-              price
-              id
-            }
-          }
-        }
-      }
-    }
-  }
-`;
+import { ENDLESS_SHIPPED_STATUSES } from '../graphql/variables';
+import { getProducts } from '../graphql/queries';
 
 class ClosetItemsList extends Component {
 
   handleRemoveActivity = (item, label) => {
-    this.props.onUpdateCloset({
+    this.props.onUpdateClosetItem({
       id: item.id,
       dates: item.dates.filter(i => i.label !== label)
     });
   }
 
   render() {
-    const closet = this.props.closet;
-    if (!this.props.customer.metafield) return <div>Customer closet metafield undefined. Recreate closet.</div>;
-    if (closet.length == 0) return <div>No items in closet</div>;
+    const {
+      closet, customer, invalidStatusMsg, membership, onUpdateCloset, order,
+      refetchQueries, selectionsLeft, onUpdateClosetItem
+    } = this.props;
 
-    const statuses = JSON.parse(this.props.customer.metafield.value).statuses;
+    if (invalidStatusMsg) return <div>{invalidStatusMsg}</div>;
+
+    const customerMeta = JSON.parse(customer.metafield.value);
+    const statuses = customerMeta.statuses;
+
+    let currentOrderMeta = [], currentOrder = [],
+      unsubmittedItemsMeta = [], unsubmittedItems = [],
+      shippedItemsMeta = [], shippedItems = [];
 
     return (
-      <Query query={GET_PRODUCTS_BY_ID} variables={{ ids: _.map(closet, 'id') }}>
+      <Query query={getProducts} variables={{ ids: _.map(closet, 'id') }}>
         {({ data, loading, error }) => {
           if (loading) return <div><Spinner size="small" color="teal" /> Fetching Items…</div>;
           if (error) return <div>{error.message}</div>;
-          return (
-            <Card>
-              <ResourceList
-                items={data.nodes}
-                renderItem={item => {
-                  const itemMeta = _.find(closet, { id: item.id });
-                  const media = (
-                    <Thumbnail
-                      source={
-                        item.images.edges[0]
-                          ? item.images.edges[0].node.originalSrc
-                          : ''
-                      }
-                      alt={
-                        item.images.edges[0]
-                          ? item.images.edges[0].node.altText
-                          : ''
-                      }
-                    />
-                  );
-                  console.log('view-closet closet item state:', itemMeta);
-                  return (
-                    <ResourceList.Item
-                      id={item.id}
-                      media={media}
-                      accessibilityLabel={`View details for ${item.title}`}
-                    >
-                      <Stack>
-                        <Stack.Item>
-                          <h3>
-                            <TextStyle variation="strong">
-                              {item.title}
-                            </TextStyle>
-                          </h3>
-                        </Stack.Item>
-                        <Stack.Item fill>
-                          <TextStyle variation="subdued">Notes</TextStyle>
-                          {itemMeta.notes}
-                        </Stack.Item>
-                        <Stack.Item>
-                          <TextStyle variation="subdued">Activity</TextStyle>
-                          {itemMeta.dates.map(d => (
-                            <div key={d.label}>
-                              <Tag
-                                onRemove={() => this.handleRemoveActivity(itemMeta, d.label)}>
-                                {d.label} - {d.value}
-                              </Tag>
-                            </div>
-                          ))}
-                        </Stack.Item>
-                        <Stack.Item>
-                          <StatusSelect
-                            item={itemMeta}
-                            options={statuses.map(s => ({ label: s, value: s }))}
-                            onUpdateCloset={this.props.onUpdateCloset} />
-                        </Stack.Item>
-                      </Stack>
-                    </ResourceList.Item>
-                  );
-                }}
+
+          // Sort items into sections
+          if (data && data.nodes) {
+            // filter out returns, current order queue, etc. from closet
+            if (closet.length > 0) {
+              closet.forEach(i => {
+                if (i.order && !i.invoice) currentOrderMeta.push(i);
+                if (i.order && i.invoice) shippedItemsMeta.push(i);
+                if (!i.order) unsubmittedItemsMeta.push(i);
+              });
+
+              // group data by category
+              data.nodes.forEach(i => {
+                if (_.find(currentOrderMeta, { id: i.id })) currentOrder.push(i);
+                if (_.find(unsubmittedItemsMeta, { id: i.id })) unsubmittedItems.push(i);
+                if (_.find(shippedItemsMeta, { id: i.id })) shippedItems.push(i);
+              });
+            }
+          }
+
+          if (data && data.nodes) return (
+            <Layout>
+              <ClosetItemSection
+                closet={closet}
+                customer={customer}
+                displayText={`Endless Order: ${_.isEmpty(order) ? "No Closet Submited" : order.date}`}
+                handleRemoveActivity={this.handleRemoveActivity}
+                id="currentOrder"
+                items={currentOrder}
+                membership={membership}
+                onUpdateCloset={onUpdateCloset}
+                onUpdateClosetItem={onUpdateClosetItem}
+                order={order}
+                refetchQueries={refetchQueries}
+                selectionsLeft={selectionsLeft}
+                showData={true}
+                showSelected={true}
+                showStatusSelect={true}
+                showUpdate={true}
+                statuses={statuses}
               />
-            </Card>
+              <ClosetItemSection
+                closet={closet}
+                customer={customer}
+                displayText={'Shipped Items'}
+                handleRemoveActivity={this.handleRemoveActivity}
+                id="shippedItems"
+                items={shippedItems}
+                onUpdateCloset={onUpdateCloset}
+                onUpdateClosetItem={onUpdateClosetItem}
+                refetchQueries={refetchQueries}
+                showActivity={false}
+                showInvoice={true}
+                showNotes={false}
+                showStatusSelect={true}
+                showUpdate={true}
+                statuses={ENDLESS_SHIPPED_STATUSES}
+              />
+              <ClosetInvoicesSection
+                customer={customer}
+              />
+              <ClosetItemSection
+                closet={closet}
+                displayText="Closet"
+                id="currentCloset"
+                items={unsubmittedItems}
+                showStatusSelect={false}
+              />
+            </Layout>
           );
         }}
       </Query>
     );
-  }
-}
-
-class StatusSelect extends Component {
-  state = {
-    statusSelected: this.props.item.status
-  }
-
-  handleStatusSelect = (selected) => {
-    const oldDates = this.props.item.dates;
-    const newDate = moment().format(ENDLESS_STATUS_DATE_FORMAT);
-
-    if (!_.find(oldDates, { label: selected })) {
-      const newDates = oldDates.concat([{ label: selected, value: newDate }]);
-      console.log('new item meta: ', { id: this.props.item.id, status: selected, dates: newDates });
-
-      this.props.onUpdateCloset({ id: this.props.item.id, status: selected, dates: newDates });
-    }
-
-    this.setState({ statusSelected: selected });
-  }
-
-  render() {
-    return (
-      <Select
-        label="Status"
-        options={this.props.options}
-        onChange={this.handleStatusSelect}
-        value={this.state.statusSelected}
-      />
-    )
   }
 }
 
