@@ -107,7 +107,7 @@ const ClosetItemSection = (props) => {
                     {showActivity && (
                       <Stack.Item>
                         <TextStyle variation="subdued">Activity</TextStyle>
-                        {itemMeta.dates.map(d => {
+                        {(id !== "shippedItems") && itemMeta.dates.map(d => {
                           return d.label == ENDLESS_ITEM_DEFAULT_STATUS ?
                             (
                               <div key={d.label}>
@@ -122,6 +122,13 @@ const ClosetItemSection = (props) => {
                                 </Tag>
                               </div>
                             );
+                        })}
+                        {(id == "shippedItems") && itemMeta.dates.map(d => {
+                          return (
+                            <div key={d.label}>
+                              <Badge> {d.label} - {d.value} </Badge>
+                            </div>
+                          );
                         })}
                       </Stack.Item>
                     )}
