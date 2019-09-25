@@ -14,6 +14,7 @@ const ENDLESS_ITEM_REMOVE_STATUS = 'Remove';
 const ENDLESS_CLOSET_EMPTY = (orderLimit) => ({
   keys: [
     'id', // STRING Shopify Product ID
+    'image_url', //STRING url of product image
     'variantIds', // ARRAY [ <STRING Variant Id>, <STRING Variant Id ]
     'hearted', // BOOLEAN 
     'note', // STRING
@@ -60,17 +61,19 @@ const ENDLESS_GET_CUSTOMER = customer => {
 const ENDLESS_CUSTOMERS_TAGS = { query: `tags:${ENDLESS_TYPES[0]}` };
 
 // Customer(s) Mutation Variables
-const ENDLESS_ADD_ITEMS = (oldCloset, newItems) => {
+const ENDLESS_ADD_ITEMS = (oldCloset, newItems, isOrder) => {
   const order = JSON.parse(oldCloset).order;
+  console.log(order);
   return _.values(_.merge(
     _.keyBy(JSON.parse(oldCloset).items, 'id'),
     _.keyBy(newItems.map(i => ({
       id: i.id,
       variantIds: i.variantIds,
+      image_url: i.imageUrl,
       note: '',
       headted: false,
       status: ENDLESS_ITEM_DEFAULT_STATUS,
-      order: order ? order.id : '',
+      order: isOrder ? order.id : '',
       invoice: '',
       dates: [{ label: ENDLESS_ITEM_DEFAULT_STATUS, value: moment().format(ENDLESS_DATE_FORMAT) }]
     })), 'id')

@@ -159,6 +159,7 @@ class ViewCloset extends React.Component {
                 subtitle={'Level: ' + membership}
                 primaryAction={{
                   content: 'Add Items',
+                  disabled: !(order && order.id),
                   onAction: () => {
                     this.setState({ showItemPicker: true });
                   }

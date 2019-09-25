@@ -36,7 +36,7 @@ const AddClosetItems = props => {
                   open={props.open}
                   onSelection={(resources) => {
                     const items = resources.selection.map(i => ({ id: i.id, variantIds: i.variants.map(v => v.id), order: props.order }));
-                    const newCloset = ENDLESS_ADD_ITEMS(customer.metafield.value, items);
+                    const newCloset = ENDLESS_ADD_ITEMS(customer.metafield.value, items, true);
                     const variables = { input: ENDLESS_UPDATE_CLOSET(customer, { items: newCloset }) };
                     handleSubmit({
                       variables: variables,
