@@ -8,7 +8,7 @@
     "dev": "nodemon server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
-    "tunnel:start": "ssh -R charlottes-closet:80:localhost:3000 serveo.net",
+    "tunnel:start": "ssh -R charlottes-closet-2:80:localhost:3000 serveo.net",
     "tunnel:stop": "ps -A| grep 'serveo.net' | cut -d' ' -f1 | xargs kill -9",
     "tunnel:restart": "npm run tunnel:stop && npm run tunnel:start"
   },

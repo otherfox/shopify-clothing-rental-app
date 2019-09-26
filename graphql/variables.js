@@ -14,7 +14,6 @@ const ENDLESS_ITEM_REMOVE_STATUS = 'Remove';
 const ENDLESS_CLOSET_EMPTY = (orderLimit) => ({
   keys: [
     'id', // STRING Shopify Product ID
-    'image_url', //STRING url of product image
     'variantIds', // ARRAY [ <STRING Variant Id>, <STRING Variant Id ]
     'hearted', // BOOLEAN 
     'note', // STRING
@@ -58,7 +57,11 @@ const ENDLESS_GET_CUSTOMER = customer => {
     order_key: ENDLESS_ORDER_KEY
   };
 };
-const ENDLESS_CUSTOMERS_TAGS = { query: `tags:${ENDLESS_TYPES[0]}` };
+const ENDLESS_GET_CUSTOMERS = {
+  query: `tags:${ENDLESS_TYPES[0]}`,
+  namespace: ENDLESS_CLOSET_NAMESPACE,
+  key: ENDLESS_CLOSET_KEY
+};
 
 // Customer(s) Mutation Variables
 const ENDLESS_ADD_ITEMS = (oldCloset, newItems, isOrder) => {
@@ -69,7 +72,6 @@ const ENDLESS_ADD_ITEMS = (oldCloset, newItems, isOrder) => {
     _.keyBy(newItems.map(i => ({
       id: i.id,
       variantIds: i.variantIds,
-      image_url: i.imageUrl,
       note: '',
       headted: false,
       status: ENDLESS_ITEM_DEFAULT_STATUS,
@@ -78,6 +80,15 @@ const ENDLESS_ADD_ITEMS = (oldCloset, newItems, isOrder) => {
       dates: [{ label: ENDLESS_ITEM_DEFAULT_STATUS, value: moment().format(ENDLESS_DATE_FORMAT) }]
     })), 'id')
   ));
+}
+
+const ENDLESS_RETURN_ITEMS = (closet) => {
+  return closet.items.map(i => {
+    if (i.status == ENDLESS_ITEM_SHIPPED_STATUS) {
+      i.dates.push({ label: 'Client Returning', value: moment().format(ENDLESS_DATE_FORMAT) });
+    }
+    return i;
+  });
 }
 
 const ENDLESS_CREATE_CLOSET = (customer, orderLimit) => ({
@@ -144,9 +155,10 @@ module.exports = {
   ENDLESS_CREATE_CLOSET,
   ENDLESS_CLEAN_CLOSET,
   ENDLESS_ADD_ITEMS,
-  ENDLESS_CUSTOMERS_TAGS,
+  ENDLESS_GET_CUSTOMERS,
   ENDLESS_GET_CUSTOMER,
   ENDLESS_ORDER_KEY,
   ENDLESS_ORDER_NAMESPACE,
-  ENDLESS_SHIPPED_STATUSES
+  ENDLESS_SHIPPED_STATUSES,
+  ENDLESS_RETURN_ITEMS
 }

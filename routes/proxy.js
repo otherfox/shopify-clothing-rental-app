@@ -2,7 +2,8 @@ const axios = require('axios');
 const uuid = require('uuid/v1');
 const moment = require('moment');
 const {
-  ENDLESS_GET_CUSTOMER, ENDLESS_ADD_ITEMS, ENDLESS_UPDATE_CLOSET, ENDLESS_DATE_FORMAT
+  ENDLESS_GET_CUSTOMER, ENDLESS_ADD_ITEMS, ENDLESS_UPDATE_CLOSET, ENDLESS_DATE_FORMAT,
+  ENDLESS_RETURN_ITEMS
 } = require('../graphql/variables');
 const { getEndlessCustomerQuery } = require('../graphql/queries');
 const { updateCustomerClosetMetaQuery } = require('../graphql/mutations');
@@ -168,6 +169,60 @@ const updateCloset = (customerId, shopCreds, ctx) => {
     });
 }
 
+const returnItems = (customerId, shopCreds, ctx) => {
+  ctx.res.statusCode = 200;
+  const { shop, apiKey, password } = shopCreds;
+  let msg = '';
+  return axios({
+    method: 'post',
+    url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
+    data: {
+      query: getEndlessCustomerQuery,
+      variables: ENDLESS_GET_CUSTOMER({ id: customerId }),
+    }
+  })
+    .then(response => {
+      console.log('recieved customer data: ', response.data);
+      const customer = response.data.data.customer;
+      if (customer.metafield) {
+        let closet = ctx.request.body;
+        closet.items = ENDLESS_RETURN_ITEMS(closet);
+        const variables = { input: ENDLESS_UPDATE_CLOSET(customer, closet) };
+        return axios({
+          method: 'post',
+          url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
+          data: {
+            query: updateCustomerClosetMetaQuery,
+            variables: variables
+          }
+        })
+          .then(response => {
+            msg = 'Returned items to closet: ' + JSON.stringify(response.data);
+            console.log(msg);
+            ctx.body = { data: msg };
+            ctx.res.statusCode = 200;
+          })
+          .catch(err => {
+            msg = 'Error returning items to closet: ' + err;
+            console.log(msg);
+            ctx.body = { data: msg };
+            ctx.res.statusCode = 200;
+          });
+      } else {
+        msg = 'Customer metafeild undefined';
+        console.log(msg);
+        ctx.body = { data: msg };
+        ctx.res.statusCode = 200;
+      }
+    })
+    .catch(err => {
+      msg = 'error: ' + err;
+      console.log(msg);
+      ctx.body = { data: msg };
+      ctx.res.statusCode = 200;
+    });
+}
+
 const proxyRoute = (shopCreds) => {
   return async (ctx) => {
     const query = ctx.query;
@@ -183,6 +238,9 @@ const proxyRoute = (shopCreds) => {
         case 'updateCloset':
           console.log('updateCloset: ', customerId, ctx.request.body);
           return updateCloset(customerId, shopCreds, ctx);
+        case 'returnItems':
+          console.log('returnItems: ', customerId, ctx.request.body);
+          return returnItems(customerId, shopCreds, ctx);
         default:
           ctx.res.statusCode = 200;
           break;

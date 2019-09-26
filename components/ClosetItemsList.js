@@ -91,7 +91,7 @@ class ClosetItemsList extends Component {
                 onUpdateCloset={onUpdateCloset}
                 onUpdateClosetItem={onUpdateClosetItem}
                 refetchQueries={refetchQueries}
-                showActivity={false}
+                showActivity={true}
                 showInvoice={true}
                 showNotes={false}
                 showStatusSelect={true}
