@@ -97,6 +97,10 @@ const ClosetItemSection = (props) => {
                         <TextContainer>{itemMeta.notes}</TextContainer>
                       </Stack.Item>
                     )}
+                    <Stack.Item>
+                      <TextStyle variation="subdued">Hearted</TextStyle>
+                      <TextContainer>{itemMeta.hearted}</TextContainer>
+                    </Stack.Item>
                     {showInvoice && (
                       <Stack.Item fill>
                         <TextContainer>
