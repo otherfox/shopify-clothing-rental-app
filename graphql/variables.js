@@ -76,7 +76,7 @@ const ENDLESS_ADD_ITEMS = (oldCloset, newItems, isOrder) => {
       headted: false,
       status: ENDLESS_ITEM_DEFAULT_STATUS,
       order: isOrder ? order.id : '',
-      invoice: '',
+      invoice: i.invoice ? i.invoice : '',
       dates: [{ label: ENDLESS_ITEM_DEFAULT_STATUS, value: moment().format(ENDLESS_DATE_FORMAT) }]
     })), 'id')
   ));

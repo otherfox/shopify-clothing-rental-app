@@ -94,9 +94,13 @@ const ClosetItemSection = (props) => {
                     {showNotes && (
                       <Stack.Item fill>
                         <TextStyle variation="subdued">Notes</TextStyle>
-                        <TextContainer>{itemMeta.notes}</TextContainer>
+                        <TextContainer>{itemMeta.note}</TextContainer>
                       </Stack.Item>
                     )}
+                    <Stack.Item>
+                      <TextStyle variation="subdued">Hearted</TextStyle>
+                      <TextContainer>{itemMeta.hearted}</TextContainer>
+                    </Stack.Item>
                     {showInvoice && (
                       <Stack.Item fill>
                         <TextContainer>
@@ -178,7 +182,7 @@ class StatusSelect extends Component {
       console.log({ id: this.props.item.id, status: selected, dates: newDates });
       this.props.onUpdateClosetItem({ id: this.props.item.id, status: selected, dates: newDates });
     } else {
-      console.log({ id: this.props.item.id, status: selected, dates: newDates });
+      console.log({ id: this.props.item.id, status: selected });
       this.props.onUpdateClosetItem({ id: this.props.item.id, status: selected });
     }
 

@@ -102,8 +102,8 @@ class ViewCloset extends React.Component {
   }
 
   render() {
-    const customerId = this.props.query.id;
-    //const customerId = "gid://shopify/Customer/2304456818722";
+    //const customerId = this.props.query.id;
+    const customerId = "gid://shopify/Customer/2314855153698";
 
     const endlessCustomerVariables = ENDLESS_GET_CUSTOMER({ id: customerId });
     const refetchQueries = [{ query: getEndlessCustomer, variables: endlessCustomerVariables }];
