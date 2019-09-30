@@ -2,7 +2,7 @@ const _ = require('lodash');
 const moment = require('moment');
 
 // Endless Types
-const ENDLESS_TYPES = ['Endless II', 'Endless III'];
+const ENDLESS_TYPES = ['Endless I', 'Endless II', 'Endless III'];
 
 // Closet Defualt Variables
 const ENDLESS_ITEM_DEFAULT_STATUS = 'In Closet';
