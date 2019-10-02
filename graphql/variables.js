@@ -71,6 +71,7 @@ const ENDLESS_ADD_ITEMS = (oldCloset, newItems, isOrder) => {
     _.keyBy(JSON.parse(oldCloset).items, 'id'),
     _.keyBy(newItems.map(i => ({
       id: i.id,
+      img: i.img,
       variantIds: i.variantIds,
       note: '',
       headted: false,
@@ -119,6 +120,7 @@ const ENDLESS_UPDATE_CLOSET = (customer, value) => {
     metafields: [
       {
         id: customer.metafield.id,
+        img: customer.metafield.img,
         namespace: ENDLESS_CLOSET_NAMESPACE,
         key: ENDLESS_CLOSET_KEY,
         value: JSON.stringify(_.assignIn(JSON.parse(customer.metafield.value), value)),
