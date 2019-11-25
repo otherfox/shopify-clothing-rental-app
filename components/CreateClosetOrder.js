@@ -72,6 +72,7 @@ class CreateClosetOrder extends Component {
                               itemIds
                             )
                           };
+                          console.log('Update Closet: ', variables);
                           handleSubmit({
                             variables: variables,
                           });
