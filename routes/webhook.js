@@ -12,8 +12,10 @@ const webhookRoute = (shopCreds) => {
     customer.id = customer.admin_graphql_api_id;
     let orderLimit;
     if (customer.tags) {
-      orderLimit = customer.tags.indexOf(ENDLESS_TYPES[0]) > -1 ? 2 : '';
-      orderLimit = customer.tags.indexOf(ENDLESS_TYPES[1]) > -1 ? 3 : orderLimit;
+      // double check this with Nick
+      orderLimit = customer.tags.indexOf(ENDLESS_TYPES[0]) > -1 ? 1 : '';
+      orderLimit = customer.tags.indexOf(ENDLESS_TYPES[1]) > -1 ? 2 : '';
+      orderLimit = customer.tags.indexOf(ENDLESS_TYPES[2]) > -1 ? 3 : orderLimit;
       if (orderLimit) {
         axios({
           method: 'post',
