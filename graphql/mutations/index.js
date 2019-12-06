@@ -3,7 +3,6 @@ const { createCustomerOrder } = require('./createCustomerOrder');
 const { fulfillCustomerOrder } = require('./fulfillCustomerOrder');
 const { removeCustomerClosetMeta } = require('./removeCustomerClosetMeta');
 const { updateCustomerClosetMeta, updateCustomerClosetMetaQuery } = require('./updateCustomerClosetMeta');
-const { updateCustomerTags } = require('./updateCustomerTags');
 
 
 module.exports = {
@@ -12,6 +11,5 @@ module.exports = {
   fulfillCustomerOrder,
   removeCustomerClosetMeta,
   updateCustomerClosetMeta,
-  updateCustomerClosetMetaQuery,
-  updateCustomerTags
+  updateCustomerClosetMetaQuery
 };
