@@ -71,9 +71,6 @@ const ENDLESS_ADD_ITEMS = (oldCloset, newItems, isOrder) => {
     _.keyBy(JSON.parse(oldCloset).items, 'id'),
     _.keyBy(newItems.map(i => ({
       id: i.id,
-      img: i.img,
-      url: i.url,
-      title: i.title,
       variantIds: i.variantIds,
       note: '',
       headted: false,
@@ -142,6 +139,11 @@ const ENDLESS_CREATE_ORDER = (customer, membership, itemIds) => {
   };
 }
 
+const ENDLESS_ADD_TAG = (customer, tag) => ({
+  id: customer.id,
+  tag: JSON.stringify(tag)
+});
+
 module.exports = {
   ENDLESS_DATE_FORMAT,
   ENDLESS_CLOSET_KEY,
@@ -163,5 +165,6 @@ module.exports = {
   ENDLESS_ORDER_KEY,
   ENDLESS_ORDER_NAMESPACE,
   ENDLESS_SHIPPED_STATUSES,
-  ENDLESS_RETURN_ITEMS
+  ENDLESS_RETURN_ITEMS,
+  ENDLESS_ADD_TAG
 }
