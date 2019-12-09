@@ -238,32 +238,39 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
       console.log('recieved customer data: ', response.data);
       const customer = response.data.data.customer;
       let customerTag = ctx.request.body;
-      orderLimit = customerTag.indexOf(ENDLESS_TYPES[0]) > -1 ? 1 : false;
-      orderLimit = customerTag.indexOf(ENDLESS_TYPES[1]) > -1 ? 2 : false;
-      orderLimit = customerTag.indexOf(ENDLESS_TYPES[2]) > -1 ? 3 : false;
-      if (orderLimit) {
-        return axios({
-          method: 'post',
-          url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
-          data: {
-            query: updateCustomerClosetMetaQuery,
-            variables: { input: ENDLESS_CREATE_CLOSET_AND_ADD_TAGS(customer, orderLimit, customerTag) },
-          }
-        })
-          .then(response => {
-            msg = 'Customer closet created: ' + JSON.stringify(response.data);
-            console.log(msg);
-            ctx.body = { data: msg };
-            ctx.res.statusCode = 200;
+      if (customerTag.tag) {
+        orderLimit = customerTag.tag.indexOf(ENDLESS_TYPES[0]) > -1 ? 1 : false;
+        orderLimit = customerTag.tag.indexOf(ENDLESS_TYPES[1]) > -1 ? 2 : false;
+        orderLimit = customerTag.tag.indexOf(ENDLESS_TYPES[2]) > -1 ? 3 : false;
+        if (orderLimit) {
+          return axios({
+            method: 'post',
+            url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
+            data: {
+              query: updateCustomerClosetMetaQuery,
+              variables: { input: ENDLESS_CREATE_CLOSET_AND_ADD_TAGS(customer, orderLimit, customerTag) },
+            }
           })
-          .catch(err => {
-            msg = ('error updating customer: ', err);
-            console.log(msg);
-            ctx.body = { data: msg };
-            ctx.res.statusCode = 200;
-          });
+            .then(response => {
+              msg = 'Customer closet created: ' + JSON.stringify(response.data);
+              console.log(msg);
+              ctx.body = { data: msg };
+              ctx.res.statusCode = 200;
+            })
+            .catch(err => {
+              msg = ('error updating customer: ', err);
+              console.log(msg);
+              ctx.body = { data: msg };
+              ctx.res.statusCode = 200;
+            });
+        } else {
+          msg = 'No tag submitted or not formatted correctly (i.e. Endless I, Endless II, Endless III)';
+          console.log(msg);
+          ctx.body = { data: msg };
+          ctx.res.statusCode = 200;
+        }
       } else {
-        msg = 'No tag submitted or not formatted correctly (i.e. Endless I, Endless II, Endless III)';
+        msg = 'Tag submitted incorrectly (i.e. { tag: "Endless III" })';
         console.log(msg);
         ctx.body = { data: msg };
         ctx.res.statusCode = 200;
