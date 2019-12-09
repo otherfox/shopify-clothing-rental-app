@@ -3,7 +3,7 @@ const uuid = require('uuid/v1');
 const moment = require('moment');
 const {
   ENDLESS_GET_CUSTOMER, ENDLESS_ADD_ITEMS, ENDLESS_UPDATE_CLOSET, ENDLESS_DATE_FORMAT,
-  ENDLESS_RETURN_ITEMS, ENDLESS_CREATE_CLOSET_AND_ADD_TAGS, ENDLESS_TYPES
+  ENDLESS_RETURN_ITEMS, ENDLESS_CREATE_CLOSET_AND_ADD_TAGS, ENDLESS_TYPES, ENDLESS_ADD_TAG
 } = require('../graphql/variables');
 const { getEndlessCustomerQuery, getCustomerQuery } = require('../graphql/queries');
 const { updateCustomerClosetMetaQuery, createCustomerClosetMetaQuery } = require('../graphql/mutations');
@@ -248,14 +248,30 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
             url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
             data: {
               query: updateCustomerClosetMetaQuery,
-              variables: { input: ENDLESS_CREATE_CLOSET_AND_ADD_TAGS(customer, orderLimit, customerTag.tag) },
+              variables: { input: ENDLESS_CREATE_CLOSET_AND_ADD_TAGS(customer, orderLimit) },
             }
           })
             .then(response => {
-              msg = 'Customer closet created: ' + customerTag.tag + JSON.stringify(response.data);
-              console.log(msg);
-              ctx.body = { data: msg };
-              ctx.res.statusCode = 200;
+              return axios({
+                method: 'post',
+                url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
+                data: {
+                  query: updateCustomerClosetMetaQuery,
+                  variables: { input: ENDLESS_ADD_TAG(customer, customerTag.tag) },
+                }
+              })
+                .then(response => {
+                  msg = 'Customer closet created and tag added: ' + JSON.stringify(response.data);
+                  console.log(msg);
+                  ctx.body = { data: msg };
+                  ctx.res.statusCode = 200;
+                })
+                .catch(err => {
+                  msg = ('error adding tag customer: ', err);
+                  console.log(msg);
+                  ctx.body = { data: msg };
+                  ctx.res.statusCode = 200;
+                });
             })
             .catch(err => {
               msg = ('error updating customer: ', err);

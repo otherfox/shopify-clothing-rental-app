@@ -103,9 +103,8 @@ const ENDLESS_CREATE_CLOSET = (customer, orderLimit) => ({
   ]
 });
 
-const ENDLESS_CREATE_CLOSET_AND_ADD_TAGS = (customer, orderLimit, endlessType) => ({
+const ENDLESS_CREATE_CLOSET_AND_ADD_TAGS = (customer, orderLimit) => ({
   id: customer.id,
-  tags: [endlessType],
   metafields: [
     {
       namespace: ENDLESS_CLOSET_NAMESPACE,
@@ -154,7 +153,7 @@ const ENDLESS_CREATE_ORDER = (customer, membership, itemIds) => {
 
 const ENDLESS_ADD_TAG = (customer, tag) => ({
   id: customer.id,
-  tags: tag
+  tags: [tag]
 });
 
 module.exports = {
