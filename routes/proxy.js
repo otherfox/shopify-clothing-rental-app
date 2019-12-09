@@ -236,7 +236,8 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
   })
     .then(response => {
       console.log('recieved customer data: ', response.data);
-      if (!response.data.data.customer.metafield) {
+      const customer = response.data.data.customer;
+      if (!customer.metafield) {
         let customerTag = ctx.request.body;
         orderLimit = customerTag.indexOf(ENDLESS_TYPES[0]) > -1 ? 1 : false;
         orderLimit = customerTag.indexOf(ENDLESS_TYPES[1]) > -1 ? 2 : false;
@@ -257,7 +258,7 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
               ctx.res.statusCode = 200;
             })
             .catch(err => {
-              msg = ('error: ', err);
+              msg = ('error updating customer: ', err);
               console.log(msg);
               ctx.body = { data: msg };
               ctx.res.statusCode = 200;
@@ -276,7 +277,7 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
       }
     })
     .catch(err => {
-      msg = 'error: ' + err;
+      msg = 'error getting customer: ' + err;
       console.log(msg);
       ctx.body = { data: msg };
       ctx.res.statusCode = 200;
