@@ -230,8 +230,8 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
     method: 'post',
     url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
     data: {
-      query: getCustomerQuery,
-      variables: { id: customerId },
+      query: getEndlessCustomerQuery,
+      variables: ENDLESS_GET_CUSTOMER({ id: customerId }),
     }
   })
     .then(response => {
@@ -248,7 +248,7 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
             url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
             data: {
               query: updateCustomerClosetMetaQuery,
-              variables: { input: ENDLESS_CREATE_CLOSET_AND_ADD_TAGS(customer, orderLimit, customerTag) },
+              variables: { input: ENDLESS_CREATE_CLOSET_AND_ADD_TAGS(customer, orderLimit, customerTag.tag) },
             }
           })
             .then(response => {
