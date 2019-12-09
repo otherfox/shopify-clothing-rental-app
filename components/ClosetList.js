@@ -5,7 +5,7 @@ import { Query } from 'react-apollo';
 import Router from 'next/router';
 import { AppBridgeContext } from '@shopify/app-bridge-react/context';
 
-import { ENDLESS_GET_CUSTOMERS } from '../graphql/variables';
+import { ENDLESS_GET_CUSTOMERS, ENDLESS_TYPES } from '../graphql/variables';
 import { getEndlessCustomers } from '../graphql/queries';
 
 class ClosetList extends React.Component {
@@ -28,7 +28,7 @@ class ClosetList extends React.Component {
           return (
             <Card>
               <ResourceList
-                items={data.customers.edges.filter(v => v.node.metafield)}
+                items={data.customers.edges.filter(v => v.node.metafield && (v.nodes.tags.join('').indexOf(ENDLESS_TYPES[0]) > -1))}
                 renderItem={item => {
                   const customer = item.node;
                   return (
@@ -57,7 +57,7 @@ class ClosetList extends React.Component {
                         </Stack.Item>
                         <Stack.Item>
                           <p>
-                            {customer.tags.map(tag => (<span key={tag}>{tag}</span>))}
+                            {customer.tags.map(tag => (<span key={tag}>{tag} </span>))}
                           </p>
                         </Stack.Item>
                       </Stack>
