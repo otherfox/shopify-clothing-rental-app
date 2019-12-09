@@ -270,7 +270,7 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
           ctx.res.statusCode = 200;
         }
       } else {
-        msg = 'Tag submitted incorrectly (i.e. { tag: "Endless III" }) ' + response.data;
+        msg = 'Tag submitted incorrectly (i.e. { tag: "Endless III" }) ' + JSON.stringify(response.data);
         console.log(msg);
         ctx.body = { data: msg };
         ctx.res.statusCode = 200;
