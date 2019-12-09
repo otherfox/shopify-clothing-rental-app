@@ -154,7 +154,7 @@ const ENDLESS_CREATE_ORDER = (customer, membership, itemIds) => {
 
 const ENDLESS_ADD_TAG = (customer, tag) => ({
   id: customer.id,
-  tag: tag
+  tags: tag
 });
 
 module.exports = {
