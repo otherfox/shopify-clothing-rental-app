@@ -4,6 +4,7 @@ const updateCustomerClosetMetaQuery = `
   mutation updateCustomerClosetMeta($input: CustomerInput!) {
     customerUpdate(input: $input) {
       customer {
+        tags
         metafields(first:10) {
           edges {
             node {
