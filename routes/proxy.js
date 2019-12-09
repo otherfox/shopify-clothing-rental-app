@@ -3,7 +3,7 @@ const uuid = require('uuid/v1');
 const moment = require('moment');
 const {
   ENDLESS_GET_CUSTOMER, ENDLESS_ADD_ITEMS, ENDLESS_UPDATE_CLOSET, ENDLESS_DATE_FORMAT,
-  ENDLESS_RETURN_ITEMS, ENDLESS_CREATE_CLOSET_AND_ADD_TAGS
+  ENDLESS_RETURN_ITEMS, ENDLESS_CREATE_CLOSET_AND_ADD_TAGS, ENDLESS_TYPES
 } = require('../graphql/variables');
 const { getEndlessCustomerQuery, getCustomerQuery } = require('../graphql/queries');
 const { updateCustomerClosetMetaQuery, createCustomerClosetMetaQuery } = require('../graphql/mutations');
