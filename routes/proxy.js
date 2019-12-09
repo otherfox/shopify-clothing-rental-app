@@ -226,7 +226,7 @@ const returnItems = (customerId, shopCreds, ctx) => {
 const createCustomerCloset = (customerId, shopCreds, ctx) => {
   ctx.res.statusCode = 200;
   const { shop, apiKey, password } = shopCreds;
-  axios({
+  return axios({
     method: 'post',
     url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
     data: {
@@ -242,7 +242,7 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
         orderLimit = customerTag.indexOf(ENDLESS_TYPES[1]) > -1 ? 2 : false;
         orderLimit = customerTag.indexOf(ENDLESS_TYPES[2]) > -1 ? 3 : false;
         if (orderLimit) {
-          axios({
+          return axios({
             method: 'post',
             url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
             data: {
