@@ -105,7 +105,7 @@ const ENDLESS_CREATE_CLOSET = (customer, orderLimit) => ({
 
 const ENDLESS_CREATE_CLOSET_AND_ADD_TAGS = (customer, orderLimit, endlessType) => ({
   id: customer.id,
-  tags: endlessType,
+  tags: [endlessType],
   metafields: [
     {
       namespace: ENDLESS_CLOSET_NAMESPACE,

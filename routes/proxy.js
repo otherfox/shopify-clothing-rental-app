@@ -252,7 +252,7 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
             }
           })
             .then(response => {
-              msg = 'Customer closet created: ' + JSON.stringify(response.data);
+              msg = 'Customer closet created: ' + customerTag.tag + JSON.stringify(response.data);
               console.log(msg);
               ctx.body = { data: msg };
               ctx.res.statusCode = 200;

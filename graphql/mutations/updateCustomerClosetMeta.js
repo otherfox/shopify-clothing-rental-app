@@ -16,6 +16,10 @@ const updateCustomerClosetMetaQuery = `
           }
         }
       }
+      userErrors {
+        field
+        message
+      }
     }
   }
 `;
