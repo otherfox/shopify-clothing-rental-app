@@ -28,7 +28,7 @@ class ClosetList extends React.Component {
           return (
             <Card>
               <ResourceList
-                items={data.customers.edges}
+                items={data.customers.edges.filter(v => item.node.metafield)}
                 renderItem={item => {
                   const customer = item.node;
                   return (

@@ -103,6 +103,19 @@ const ENDLESS_CREATE_CLOSET = (customer, orderLimit) => ({
   ]
 });
 
+const ENDLESS_CREATE_CLOSET_AND_ADD_TAGS = (customer, orderLimit, endlessType) => ({
+  id: customer.id,
+  tags: endlessType,
+  metafields: [
+    {
+      namespace: ENDLESS_CLOSET_NAMESPACE,
+      key: ENDLESS_CLOSET_KEY,
+      value: JSON.stringify(ENDLESS_CLOSET_EMPTY(orderLimit)),
+      valueType: 'JSON_STRING'
+    }
+  ]
+});
+
 const ENDLESS_CLEAN_CLOSET = closet => {
   // remove returned and remove items
   return closet.filter(i => (
@@ -158,6 +171,7 @@ module.exports = {
   ENDLESS_CREATE_ORDER,
   ENDLESS_UPDATE_CLOSET,
   ENDLESS_CREATE_CLOSET,
+  ENDLESS_CREATE_CLOSET_AND_ADD_TAGS,
   ENDLESS_CLEAN_CLOSET,
   ENDLESS_ADD_ITEMS,
   ENDLESS_GET_CUSTOMERS,
