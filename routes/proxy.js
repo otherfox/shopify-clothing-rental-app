@@ -238,7 +238,7 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
       console.log('recieved customer data: ', response.data);
       const customer = response.data.data.customer;
       let customerTag = ctx.request.body;
-      if (customerTag.tag) {
+      if (customer && customerTag.tag) {
         orderLimit = customerTag.tag.indexOf(ENDLESS_TYPES[0]) > -1 ? 1 : false;
         orderLimit = customerTag.tag.indexOf(ENDLESS_TYPES[1]) > -1 ? 2 : false;
         orderLimit = customerTag.tag.indexOf(ENDLESS_TYPES[2]) > -1 ? 3 : false;
