@@ -1,7 +1,7 @@
 const gql = require('graphql-tag');
 
 // Get Customer by ID
-const getCustomer = gql`
+const getCustomerQuery = `
   query getCustomer($id: ID!) {
     customer(id: $id) {
       id
@@ -31,6 +31,9 @@ const getCustomer = gql`
   }
 `;
 
+const getCustomer = gql`${getCustomerQuery}`;
+
 module.exports = {
-  getCustomer
+  getCustomer,
+  getCustomerQuery
 };

@@ -5,7 +5,7 @@ const {
   ENDLESS_GET_CUSTOMER, ENDLESS_ADD_ITEMS, ENDLESS_UPDATE_CLOSET, ENDLESS_DATE_FORMAT,
   ENDLESS_RETURN_ITEMS, ENDLESS_CREATE_CLOSET_AND_ADD_TAGS
 } = require('../graphql/variables');
-const { getEndlessCustomerQuery } = require('../graphql/queries');
+const { getEndlessCustomerQuery, getCustomerQuery } = require('../graphql/queries');
 const { updateCustomerClosetMetaQuery, createCustomerClosetMetaQuery } = require('../graphql/mutations');
 
 const addItemsToCloset = (customerId, shopCreds, ctx) => {
@@ -230,47 +230,40 @@ const createCustomerCloset = (customerId, shopCreds, ctx) => {
     method: 'post',
     url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
     data: {
-      query: getEndlessCustomerQuery,
-      variables: ENDLESS_GET_CUSTOMER({ id: customerId }),
+      query: getCustomerQuery,
+      variables: { id: customerId },
     }
   })
     .then(response => {
       console.log('recieved customer data: ', response.data);
       const customer = response.data.data.customer;
-      if (!customer.metafield) {
-        let customerTag = ctx.request.body;
-        orderLimit = customerTag.indexOf(ENDLESS_TYPES[0]) > -1 ? 1 : false;
-        orderLimit = customerTag.indexOf(ENDLESS_TYPES[1]) > -1 ? 2 : false;
-        orderLimit = customerTag.indexOf(ENDLESS_TYPES[2]) > -1 ? 3 : false;
-        if (orderLimit) {
-          return axios({
-            method: 'post',
-            url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
-            data: {
-              query: updateCustomerClosetMetaQuery,
-              variables: { input: ENDLESS_CREATE_CLOSET_AND_ADD_TAGS(customer, orderLimit, customerTag) },
-            }
+      let customerTag = ctx.request.body;
+      orderLimit = customerTag.indexOf(ENDLESS_TYPES[0]) > -1 ? 1 : false;
+      orderLimit = customerTag.indexOf(ENDLESS_TYPES[1]) > -1 ? 2 : false;
+      orderLimit = customerTag.indexOf(ENDLESS_TYPES[2]) > -1 ? 3 : false;
+      if (orderLimit) {
+        return axios({
+          method: 'post',
+          url: `https://${apiKey}:${password}@${shop}/admin/api/graphql.json`,
+          data: {
+            query: updateCustomerClosetMetaQuery,
+            variables: { input: ENDLESS_CREATE_CLOSET_AND_ADD_TAGS(customer, orderLimit, customerTag) },
+          }
+        })
+          .then(response => {
+            msg = 'Customer closet created: ' + JSON.stringify(response.data);
+            console.log(msg);
+            ctx.body = { data: msg };
+            ctx.res.statusCode = 200;
           })
-            .then(response => {
-              msg = 'Customer closet created: ' + JSON.stringify(response.data);
-              console.log(msg);
-              ctx.body = { data: msg };
-              ctx.res.statusCode = 200;
-            })
-            .catch(err => {
-              msg = ('error updating customer: ', err);
-              console.log(msg);
-              ctx.body = { data: msg };
-              ctx.res.statusCode = 200;
-            });
-        } else {
-          msg = 'No tag submitted or not formatted correctly (i.e. Endless I, Endless II, Endless III)';
-          console.log(msg);
-          ctx.body = { data: msg };
-          ctx.res.statusCode = 200;
-        }
+          .catch(err => {
+            msg = ('error updating customer: ', err);
+            console.log(msg);
+            ctx.body = { data: msg };
+            ctx.res.statusCode = 200;
+          });
       } else {
-        msg = 'closet already created';
+        msg = 'No tag submitted or not formatted correctly (i.e. Endless I, Endless II, Endless III)';
         console.log(msg);
         ctx.body = { data: msg };
         ctx.res.statusCode = 200;
