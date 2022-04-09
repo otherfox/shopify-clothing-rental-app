@@ -33,7 +33,7 @@
     "koa-router": "^7.4.0",
     "koa-session": "^5.12.3",
     "lodash": "^4.17.15",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "next": "^9.0.5",
     "node-fetch": "^2.6.0",
     "react": "^16.9.0",
